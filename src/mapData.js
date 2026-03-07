@@ -81,9 +81,9 @@ export const generateWorldMap = () => {
     return nodes.map(n => ({
         ...n,
         code: n.name.substring(0, 3).toUpperCase(),
-        military: Math.floor(Math.random() * 80) + 10,
-        oil: Math.floor(Math.random() * 80) + 10,
-        tech: Math.floor(Math.random() * 80) + 10,
+        military: Math.floor(Math.random() * 30) + 10,
+        oil: Math.floor(Math.random() * 30) + 10,
+        tech: Math.floor(Math.random() * 30) + 10,
         trait: traits[Math.floor(Math.random() * traits.length)],
         isOccupied: false,
         hasEvent: false

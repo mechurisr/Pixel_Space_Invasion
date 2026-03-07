@@ -46,7 +46,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                 <div className="space-y-5">
                     {/* Military */}
                     <div className="space-y-1">
-                        <div className="flex justify-between items-center text-[8px] text-red-400">
+                        <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'text-purple-400' : 'text-red-400'}`}>
                             <div className="flex items-center gap-1">
                                 <MilitaryIcon /> <span>MILITARY FORCE</span>
                             </div>
@@ -54,7 +54,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                         </div>
                         <div className="w-full h-3 bg-black/50 border-2 border-pixel-border p-[1px]">
                             <div
-                                className="h-full bg-red-600 shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)]"
+                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'bg-purple-600' : 'bg-red-600'}`}
                                 style={{ width: `${country.military}%` }}
                             ></div>
                         </div>
@@ -62,7 +62,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
 
                     {/* Oil */}
                     <div className="space-y-1">
-                        <div className="flex justify-between items-center text-[8px] text-yellow-500">
+                        <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'GIANT RESOURCE HARVESTER' ? 'text-purple-400' : 'text-yellow-500'}`}>
                             <div className="flex items-center gap-1">
                                 <OilIcon /> <span>CRUDE OIL</span>
                             </div>
@@ -70,7 +70,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                         </div>
                         <div className="w-full h-3 bg-black/50 border-2 border-pixel-border p-[1px]">
                             <div
-                                className="h-full bg-yellow-600 shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)]"
+                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'GIANT RESOURCE HARVESTER' ? 'bg-purple-600' : 'bg-yellow-600'}`}
                                 style={{ width: `${country.oil}%` }}
                             ></div>
                         </div>
@@ -78,7 +78,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
 
                     {/* Tech */}
                     <div className="space-y-1">
-                        <div className="flex justify-between items-center text-[8px] text-blue-400">
+                        <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'PSIONIC ALIEN SPECIALIST' ? 'text-purple-400' : 'text-blue-400'}`}>
                             <div className="flex items-center gap-1">
                                 <TechIcon /> <span>TECH ASSETS</span>
                             </div>
@@ -86,7 +86,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                         </div>
                         <div className="w-full h-3 bg-black/50 border-2 border-pixel-border p-[1px]">
                             <div
-                                className="h-full bg-blue-600 shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)]"
+                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'PSIONIC ALIEN SPECIALIST' ? 'bg-purple-600' : 'bg-blue-600'}`}
                                 style={{ width: `${country.tech}%` }}
                             ></div>
                         </div>
