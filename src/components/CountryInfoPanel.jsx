@@ -31,7 +31,11 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                         ? 'bg-purple-900/50 border-purple-500 text-purple-300'
                         : 'bg-blue-900/50 border-blue-500/50 text-blue-300'
                         }`}>
-                        {country.isOccupied ? '☣ ALIEN COLONY' : country.trait}
+                        {country.isOccupied ? '☣ ALIEN COLONY' : (
+                            country.trait === 'MILITARY POWERHOUSE' ? '⚔ MILITARY POWERHOUSE (+25 MIL)' :
+                                country.trait === 'TECH-CENTRIC' ? '🧬 TECH-CENTRIC (+25 TECH)' :
+                                    country.trait === 'RESOURCE-RICH' ? '⛽ RESOURCE-RICH (+OIL)' : country.trait
+                        )}
                     </div>
                     <p className="text-[7px] text-slate-500 font-mono">ID: {country.id} | LOC: {country.code}</p>
                 </div>

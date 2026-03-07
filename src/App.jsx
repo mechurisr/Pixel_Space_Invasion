@@ -90,16 +90,18 @@ function App() {
 
     if (actionType === 'TECH') {
       if (pCountry.oil >= 20) {
-        setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, oil: t.oil - 20, tech: Math.min(100, t.tech + 15) } : t))
+        const bonus = pCountry.trait === 'TECH-CENTRIC' ? 25 : 15
+        setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, oil: t.oil - 20, tech: Math.min(100, t.tech + bonus) } : t))
         setActedRegions(prev => [...prev, pCountry.id])
-        addEvent(`[${pCountry.name}] TECHNOLOGY UPGRADED. (-20 OIL, +15 TECH)`)
+        addEvent(`[${pCountry.name}] TECHNOLOGY UPGRADED. (-20 OIL, +${bonus} TECH)`)
       } else addEvent(`[ERROR] INSUFFICIENT CRUDE OIL IN ${pCountry.name}.`, 'alert')
     }
     else if (actionType === 'MILITARY') {
       if (pCountry.tech >= 20) {
-        setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, tech: t.tech - 20, military: Math.min(100, t.military + 15) } : t))
+        const bonus = pCountry.trait === 'MILITARY POWERHOUSE' ? 25 : 15
+        setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, tech: t.tech - 20, military: Math.min(100, t.military + bonus) } : t))
         setActedRegions(prev => [...prev, pCountry.id])
-        addEvent(`[${pCountry.name}] MILITARY REINFORCED. (-20 TECH, +15 MILITARY)`)
+        addEvent(`[${pCountry.name}] MILITARY REINFORCED. (-20 TECH, +${bonus} MILITARY)`)
       } else addEvent(`[ERROR] INSUFFICIENT TECH ASSETS IN ${pCountry.name}.`, 'alert')
     }
     else if (actionType === 'INVADE') {
@@ -154,7 +156,12 @@ function App() {
     let updateLogs = []
 
     // Copy states for processing
-    let newTerritories = [...territories].map(t => ({ ...t, oil: Math.min(100, t.oil + Math.floor(Math.random() * 10)) }))
+    let newTerritories = [...territories].map(t => {
+      const passiveOil = t.trait === 'RESOURCE-RICH'
+        ? Math.floor(Math.random() * 11) + 5 // 5-15 oil
+        : Math.floor(Math.random() * 10) // 0-9 oil
+      return { ...t, oil: Math.min(100, t.oil + passiveOil) }
+    })
     let newAiData = JSON.parse(JSON.stringify(aiData))
     let newPlayerIds = [...playerIds]
 
@@ -221,12 +228,14 @@ function App() {
           updateLogs.push(`[${factionMetadata.name}] SECURED ${target.name}.`)
         } else if (t.oil >= 20 && t.tech < 80) {
           // Upgrade Tech
+          const bonus = t.trait === 'TECH-CENTRIC' ? 25 : 15
           newTerritories[tIndex].oil -= 20
-          newTerritories[tIndex].tech = Math.min(100, t.tech + 15)
+          newTerritories[tIndex].tech = Math.min(100, t.tech + bonus)
         } else if (t.tech >= 20) {
           // Upgrade Military
+          const bonus = t.trait === 'MILITARY POWERHOUSE' ? 25 : 15
           newTerritories[tIndex].tech -= 20
-          newTerritories[tIndex].military = Math.min(100, t.military + 15)
+          newTerritories[tIndex].military = Math.min(100, t.military + bonus)
         }
       })
     })
