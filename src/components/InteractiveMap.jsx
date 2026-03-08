@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode }) => {
+export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode }) => {
     return (
         <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border overflow-auto">
             <div className="min-w-[1200px] min-h-[600px] w-full h-full relative">
@@ -33,6 +33,12 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                     // Targetable if it's a neighbor of the CURRENTLY invading region
                     const isTargetable = invasionTargetMode && territories.find(pt => pt.id === invasionTargetMode)?.neighbors.includes(t.id)
 
+                    // Transfer targetable if it's a neighbor of the source region AND is player owned
+                    const isTransferTargetable = transferTargetMode && territories.find(st => st.id === transferTargetMode)?.neighbors.includes(t.id) && isPlayer
+
+                    // Nuke targetable is ANY region
+                    const isNukeTarget = nukeTargetMode && t.id !== nukeTargetMode
+
                     let nodeClass = 'bg-slate-800/80 border-slate-600 focus:bg-slate-700'
                     let textClass = 'text-slate-300'
                     let label = null
@@ -54,6 +60,10 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
 
                     if (isTargetable && !isPlayer) {
                         nodeClass += ' ring-4 ring-red-500 ring-offset-2 ring-offset-black animate-pulse cursor-crosshair z-20'
+                    } else if (isTransferTargetable) {
+                        nodeClass += ' ring-4 ring-green-400 ring-offset-2 ring-offset-black animate-pulse cursor-pointer z-20'
+                    } else if (isNukeTarget) {
+                        nodeClass += ' ring-[6px] ring-red-600 ring-offset-4 ring-offset-black animate-[ping_1s_infinite] cursor-crosshair z-30'
                     } else if (isSelected) {
                         nodeClass += ' ring-2 ring-blue-400'
                     }

@@ -24,6 +24,24 @@ export const ActionModal = ({ country, onAction, onClose }) => {
                         </button>
 
                         <button
+                            onClick={() => onAction('TRANSFER')}
+                            className="w-full text-left p-3 border-2 border-green-500/50 bg-green-900/30 hover:bg-green-800/50 flex flex-col gap-1 transition-colors"
+                        >
+                            <span className="text-[10px] text-green-300 font-bold">▶ TRANSFER TROOPS</span>
+                            <span className="text-[7px] text-slate-400">MOVE 25 MILITARY UNITS TO A NEIGHBORING ALLY.</span>
+                        </button>
+
+                        {country.military >= 100 && country.tech >= 100 && !country.nukeStatus && (
+                            <button
+                                onClick={() => onAction('NUKE_DEV')}
+                                className="w-full text-left p-3 border-2 border-red-600 bg-red-950/40 hover:bg-red-900/60 flex flex-col gap-1 transition-colors animate-pulse"
+                            >
+                                <span className="text-[10px] text-red-400 font-bold">☢ INITIATE NUCLEAR PROGRAM</span>
+                                <span className="text-[7px] text-slate-400">COST: 70 MIL FORCE | 70 TECH ASSETS</span>
+                            </button>
+                        )}
+
+                        <button
                             onClick={() => onAction('INVADE')}
                             className="w-full text-left p-3 border-2 border-yellow-500/50 bg-yellow-900/30 hover:bg-yellow-800/50 flex flex-col gap-1 transition-colors"
                         >

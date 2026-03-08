@@ -2,16 +2,16 @@
 export const generateWorldMap = () => {
     const nodes = [
         // North America (1-12)
-        { id: 1, name: "Vancouver", x: 12, y: 15, neighbors: [2, 4, 30] },
+        { id: 1, name: "Vancouver", x: 12, y: 15, neighbors: [2, 4] },
         { id: 2, name: "Seattle", x: 13, y: 22, neighbors: [1, 3, 5] },
         { id: 3, name: "San Francisco", x: 11, y: 32, neighbors: [2, 6, 8] },
         { id: 4, name: "Calgary", x: 17, y: 16, neighbors: [1, 5, 10] },
         { id: 5, name: "Denver", x: 18, y: 28, neighbors: [2, 4, 6, 11] },
-        { id: 6, name: "Los Angeles", x: 13, y: 40, neighbors: [3, 5, 7, 8] },
+        { id: 6, name: "Los Angeles", x: 13, y: 40, neighbors: [3, 5, 7, 8, 58] },
         { id: 7, name: "Mexico City", x: 16, y: 50, neighbors: [6, 9, 13] },
         { id: 8, name: "Texas Base", x: 19, y: 42, neighbors: [3, 6, 9, 11] },
         { id: 9, name: "Miami", x: 25, y: 44, neighbors: [7, 8, 12, 13] },
-        { id: 10, name: "Toronto", x: 23, y: 18, neighbors: [4, 11, 23] },
+        { id: 10, name: "Toronto", x: 23, y: 18, neighbors: [4, 11, 23, 30] },
         { id: 11, name: "Chicago", x: 22, y: 26, neighbors: [5, 8, 10, 12] },
         { id: 12, name: "New York", x: 27, y: 26, neighbors: [9, 11, 10, 23] },
 
@@ -22,20 +22,20 @@ export const generateWorldMap = () => {
         { id: 16, name: "Lima", x: 21, y: 70, neighbors: [14, 17, 18] },
         { id: 17, name: "La Paz", x: 25, y: 73, neighbors: [16, 18, 20] },
         { id: 18, name: "Santiago", x: 22, y: 83, neighbors: [16, 17, 19] },
-        { id: 19, name: "Patagonia", x: 24, y: 92, neighbors: [18, 20, 56] },
+        { id: 19, name: "Patagonia", x: 24, y: 92, neighbors: [18, 20, 56, 60] },
         { id: 20, name: "Buenos Aires", x: 28, y: 84, neighbors: [17, 18, 19, 21] },
         { id: 21, name: "Sao Paulo", x: 32, y: 72, neighbors: [15, 20, 22] },
         { id: 22, name: "Rio de Janeiro", x: 34, y: 68, neighbors: [21, 35] },
 
         // Europe (23-32)
         { id: 23, name: "London", x: 44, y: 22, neighbors: [10, 12, 24, 25] },
-        { id: 24, name: "Paris", x: 46, y: 28, neighbors: [23, 26, 27, 33] },
+        { id: 24, name: "Paris", x: 46, y: 28, neighbors: [23, 26, 27, 33, 28] },
         { id: 25, name: "Oslo", x: 50, y: 12, neighbors: [23, 28, 29] },
         { id: 26, name: "Madrid", x: 43, y: 34, neighbors: [24, 27, 33] },
         { id: 27, name: "Rome", x: 50, y: 35, neighbors: [24, 26, 31, 34] },
         { id: 28, name: "Berlin", x: 51, y: 24, neighbors: [24, 25, 29, 31] },
         { id: 29, name: "Stockholm", x: 54, y: 14, neighbors: [25, 28, 30, 42] },
-        { id: 30, name: "Reykjavik", x: 38, y: 10, neighbors: [1, 25, 29] }, // Bridge to Vancouver
+        { id: 30, name: "Reykjavik", x: 38, y: 10, neighbors: [10, 25, 29] }, // Bridge to Toronto
         { id: 31, name: "Warsaw", x: 55, y: 26, neighbors: [27, 28, 32, 43] },
         { id: 32, name: "Kyiv", x: 58, y: 28, neighbors: [31, 34, 43] },
 
@@ -71,9 +71,9 @@ export const generateWorldMap = () => {
         { id: 55, name: "Jakarta", x: 83, y: 68, neighbors: [53, 54, 57] },
         { id: 56, name: "Antarctic Core", x: 50, y: 95, neighbors: [19, 39, 57] },
         { id: 57, name: "Sydney", x: 90, y: 80, neighbors: [54, 55, 56, 60] },
-        { id: 58, name: "Tokyo", x: 92, y: 35, neighbors: [52, 59, 60] },
+        { id: 58, name: "Tokyo", x: 92, y: 35, neighbors: [52, 59, 60, 6] },
         { id: 59, name: "Kamchatka", x: 94, y: 18, neighbors: [44, 58] }, // Removed Bering Strait direct connection to simplify
-        { id: 60, name: "Auckland", x: 95, y: 88, neighbors: [57, 58] }
+        { id: 60, name: "Auckland", x: 95, y: 88, neighbors: [57, 58, 19] }
     ]
 
     const traits = ['TECH-CENTRIC', 'RESOURCE-RICH', 'MILITARY POWERHOUSE']
@@ -86,6 +86,7 @@ export const generateWorldMap = () => {
         tech: Math.floor(Math.random() * 30) + 10,
         trait: traits[Math.floor(Math.random() * traits.length)],
         isOccupied: false,
-        hasEvent: false
+        hasEvent: false,
+        nukeStatus: null
     }))
 }

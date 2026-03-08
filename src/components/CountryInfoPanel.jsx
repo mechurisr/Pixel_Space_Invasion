@@ -2,7 +2,7 @@ import React from 'react'
 import { PixelPanel } from './PixelPanel'
 import { OilIcon, TechIcon, MilitaryIcon } from './Icons'
 
-export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecuteProtocol, gameState }) => {
+export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecuteProtocol, gameState, isTargetingMode }) => {
     if (!country) return (
         <PixelPanel title="COMMAND CENTER" className="h-full">
             <div className="flex flex-col items-center justify-center h-full space-y-4">
@@ -98,16 +98,27 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                 </div>
 
                 <div className="pt-4 border-t-2 border-pixel-border/20">
+                    {isPlayerOwned && country.nukeStatus === 'READY' && !hasActed && (
+                        <button
+                            onClick={() => onExecuteProtocol('NUKE_LAUNCH')}
+                            className="w-full mb-3 bg-red-950 hover:bg-red-900 border-2 border-red-500 text-red-100 py-3 text-[10px] animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]"
+                        >
+                            ☢ LAUNCH NUCLEAR STRIKE ☢
+                        </button>
+                    )}
+
                     <button
                         onClick={onExecuteProtocol}
                         disabled={!isPlayerOwned || country.isOccupied || hasActed}
                         className={`w-full border-2 shadow-pixel px-2 py-3 text-[8px] transition-all
               ${isPlayerOwned && !country.isOccupied && !hasActed
-                                ? 'bg-blue-800 hover:bg-blue-700 border-blue-400 text-white active:translate-x-1 active:translate-y-1 active:shadow-none'
+                                ? isTargetingMode
+                                    ? 'bg-red-800 hover:bg-red-700 border-red-400 text-white active:translate-x-1 active:translate-y-1 active:shadow-none'
+                                    : 'bg-blue-800 hover:bg-blue-700 border-blue-400 text-white active:translate-x-1 active:translate-y-1 active:shadow-none'
                                 : 'bg-slate-800 border-slate-700 text-slate-600 cursor-not-allowed'}
             `}
                     >
-                        {!isPlayerOwned ? 'RESTRICTED ACCESS' : hasActed ? 'ACTION ALREADY TAKEN' : 'EXECUTE PROTOCOL'}
+                        {!isPlayerOwned ? 'RESTRICTED ACCESS' : hasActed ? 'ACTION ALREADY TAKEN' : isTargetingMode ? 'CANCEL TARGETING' : 'EXECUTE PROTOCOL'}
                     </button>
                 </div>
             </div>
