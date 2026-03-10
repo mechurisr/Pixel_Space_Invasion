@@ -1,6 +1,6 @@
 import React from 'react'
 
-export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode }) => {
+export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [] }) => {
     return (
         <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border overflow-auto">
             <div className="min-w-[1200px] min-h-[600px] w-full h-full relative">
@@ -25,6 +25,7 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                 {territories.map((t) => {
                     const isPlayer = playerIds?.includes(t.id)
                     const isSelected = selectedId === t.id
+                    const canAct = isPlayer && !actedRegions.includes(t.id)
 
                     // Check AI Owner
                     const owningAi = aiData?.find(f => f.territoryIds.includes(t.id))
@@ -85,6 +86,11 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                             </span>
                             {t.hasEvent && !t.isOccupied && (
                                 <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 animate-ping rounded-full -mt-1 -mr-1"></div>
+                            )}
+                            {canAct && (
+                                <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-blue-500 rounded-sm border-[1px] border-blue-200 flex items-center justify-center shadow-[0_0_5px_rgba(59,130,246,0.8)] z-20">
+                                    <span className="text-[7px] md:text-[9px] font-bold text-white leading-none mt-[1px]">!</span>
+                                </div>
                             )}
                         </button>
                     )

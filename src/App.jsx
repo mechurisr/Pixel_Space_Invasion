@@ -670,6 +670,7 @@ function App() {
               invasionTargetMode={invasionTargetMode}
               transferTargetMode={transferTargetMode}
               nukeTargetMode={nukeTargetMode}
+              actedRegions={actedRegions}
             />
           </div>
 
