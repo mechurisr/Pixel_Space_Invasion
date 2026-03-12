@@ -1,7 +1,9 @@
 import React, { useEffect, useRef } from 'react'
 import { PixelPanel } from './PixelPanel'
+import { useLanguage } from '../LanguageContext'
 
 export const EventLogPanel = ({ events }) => {
+    const { t } = useLanguage()
     const endRef = useRef(null)
 
     useEffect(() => {
@@ -9,7 +11,7 @@ export const EventLogPanel = ({ events }) => {
     }, [events])
 
     return (
-        <PixelPanel title="GLOBAL EVENT LOG" className="h-[150px] overflow-hidden">
+        <PixelPanel title={t('GLOBAL_EVENT_LOG')} className="h-[150px] overflow-hidden">
             <div className="flex flex-col h-full space-y-2 overflow-y-auto pr-2 custom-scrollbar text-[8px] md:text-sm">
                 {events.map((event, i) => (
                     <div key={i} className={`flex items-start font-pixel ${event.type === 'alert' ? 'text-red-400' : 'text-slate-400'}`}>
@@ -21,7 +23,7 @@ export const EventLogPanel = ({ events }) => {
                 ))}
                 <div ref={endRef} />
                 {events.length === 0 && (
-                    <p className="text-[10px] text-slate-600">WAITING FOR INTEL...</p>
+                    <p className="text-[10px] text-slate-600">{t('WAITING_FOR_INTEL')}</p>
                 )}
             </div>
         </PixelPanel>

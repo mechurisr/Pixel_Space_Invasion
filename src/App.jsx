@@ -4,13 +4,14 @@ import { InteractiveMap } from './components/InteractiveMap'
 import { EventLogPanel } from './components/EventLogPanel'
 import { ActionModal } from './components/ActionModal'
 import { generateWorldMap } from './mapData'
+import { useLanguage } from './LanguageContext'
 
-export const AI_FACTIONS = [
-  { id: 'AI-1', colorClass: 'text-blue-400', name: 'BLUE CORSAIR' },
-  { id: 'AI-2', colorClass: 'text-yellow-400', name: 'YELLOW SWARM' },
-  { id: 'AI-3', colorClass: 'text-pink-400', name: 'PINK SYNDICATE' },
-  { id: 'AI-4', colorClass: 'text-cyan-400', name: 'CYAN DOMINION' },
-  { id: 'AI-5', colorClass: 'text-orange-400', name: 'ORANGE VANGUARD' },
+const getAiFactions = (t) => [
+  { id: 'AI-1', colorClass: 'text-blue-400', name: t('BLUE_CORSAIR') },
+  { id: 'AI-2', colorClass: 'text-yellow-400', name: t('YELLOW_SWARM') },
+  { id: 'AI-3', colorClass: 'text-pink-400', name: t('PINK_SYNDICATE') },
+  { id: 'AI-4', colorClass: 'text-cyan-400', name: t('CYAN_DOMINION') },
+  { id: 'AI-5', colorClass: 'text-orange-400', name: t('ORANGE_VANGUARD') },
 ]
 
 const getEffectiveMilitary = (country) => {
@@ -19,8 +20,10 @@ const getEffectiveMilitary = (country) => {
   }
   return country.military
 }
-
 function App() {
+  const { t, lang, toggleLanguage } = useLanguage()
+  const AI_FACTIONS = getAiFactions(t)
+
   const [gameState, setGameState] = useState('SELECT_START') // SELECT_START, PLAYING, GAME_OVER
   const [territories, setTerritories] = useState(generateWorldMap())
   const [selectedCountryId, setSelectedCountryId] = useState(null)
@@ -32,7 +35,7 @@ function App() {
   const [actedRegions, setActedRegions] = useState([])
   const [turn, setTurn] = useState(1)
   const [events, setEvents] = useState([
-    { timestamp: '00:00', type: 'info', message: 'SYSTEM INITIALIZED. SELECT A COMMAND NODE.' }
+    { timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }
   ])
 
   const [showActionModal, setShowActionModal] = useState(false)
@@ -50,8 +53,8 @@ function App() {
       const newTerritories = [...territories]
 
       // Starter Buff
-      const startNodeIdx = newTerritories.findIndex(t => t.id === country.id)
-      newTerritories[startNodeIdx] = { ...newTerritories[startNodeIdx], military: 80, tech: 60, oil: 60 }
+      const startNodeIdx = newTerritories.findIndex(node => node.id === country.id)
+      newTerritories[startNodeIdx] = { ...newTerritories[startNodeIdx], military: 60, tech: 40, oil: 40 }
 
       setPlayerIds([country.id])
 
@@ -96,8 +99,8 @@ function App() {
       setAiData(aiInitData)
       setGameState('PLAYING')
       setSelectedCountryId(country.id)
-      addEvent(`COMMAND ESTABLISHED AT ${country.name}. 5 HOSTILE FACTIONS DETECTED.`, 'alert')
-      addEvent(`[SYSTEM] STARTER RESOURCES ALLOCATED: 80 MIL / 60 OIL / 60 TECH.`)
+      addEvent(t('COMMAND_ESTABLISHED', { name: t(country.name) }), 'alert')
+      addEvent(t('RESOURCES_ALLOCATED'))
       return
     }
 
@@ -158,106 +161,109 @@ function App() {
         const bonus = pCountry.trait === 'TECH-CENTRIC' ? 25 : 15
         setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, oil: t.oil - 20, tech: Math.min(100, t.tech + bonus) } : t))
         setActedRegions(prev => [...prev, pCountry.id])
-        addEvent(`[${pCountry.name}] TECHNOLOGY UPGRADED. (-20 OIL, +${bonus} TECH)`)
-      } else addEvent(`[ERROR] INSUFFICIENT CRUDE OIL IN ${pCountry.name}.`, 'alert')
+        addEvent(t('TECH_UPGRADED', { name: t(pCountry.name), bonus }))
+      } else addEvent(t('INSUFFICIENT_OIL', { name: t(pCountry.name) }), 'alert')
     }
     else if (actionType === 'MILITARY') {
       if (pCountry.tech >= 20) {
         const bonus = pCountry.trait === 'MILITARY POWERHOUSE' ? 25 : 15
         setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, tech: t.tech - 20, military: Math.min(100, t.military + bonus) } : t))
         setActedRegions(prev => [...prev, pCountry.id])
-        addEvent(`[${pCountry.name}] MILITARY REINFORCED. (-20 TECH, +${bonus} MILITARY)`)
-      } else addEvent(`[ERROR] INSUFFICIENT TECH ASSETS IN ${pCountry.name}.`, 'alert')
+        addEvent(t('MIL_REINFORCED', { name: t(pCountry.name), bonus }))
+      } else addEvent(t('INSUFFICIENT_TECH', { name: t(pCountry.name) }), 'alert')
     }
-    else if (actionType === 'INVADE') {
-      setInvasionTargetMode(selectedCountry.id) // store which country is invading
-      addEvent(`[COMBAT PROTOCOL] ${pCountry.name} PREPARING INVASION. SELECT A TARGET.`, 'alert')
-    }
-    else if (actionType === 'TRANSFER') {
-      setTransferTargetMode(selectedCountry.id)
-      addEvent(`[LOGISTICS] ${pCountry.name} PREPARING TROOP TRANSFER. SELECT A FRIENDLY TARGET.`, 'info')
-    }
-    else if (actionType === 'NUKE_DEV') {
-      if (pCountry.military >= 70 && pCountry.tech >= 70) {
-        setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, military: t.military - 70, tech: t.tech - 70, nukeStatus: 'DEVELOPING' } : t))
-        setActedRegions(prev => [...prev, pCountry.id])
-        addEvent(`[STRATEGIC] NUCLEAR PROGRAM INITIATED AT ${pCountry.name}. (-70 MIL, -70 TECH)`)
-      } else {
-        addEvent(`[ERROR] INSUFFICIENT RESOURCES FOR NUCLEAR PROGRAM.`, 'alert')
+      else if (actionType === 'INVADE') {
+        setInvasionTargetMode(selectedCountry.id) // store which country is invading
+        addEvent(t('INVASION_PREP', { name: t(pCountry.name) }), 'alert')
       }
-    }
-    else if (actionType === 'NUKE_LAUNCH') {
-      setNukeTargetMode(selectedCountry.id)
-      addEvent(`[WARNING] NUCLEAR LAUNCH PROTOCOL ACTIVE. SELECT ANY MAP TARGET.`, 'alert')
-    }
+      else if (actionType === 'TRANSFER') {
+        setTransferTargetMode(selectedCountry.id)
+        addEvent(t('TRANSFER_PREP', { name: t(pCountry.name) }), 'info')
+      }
+      else if (actionType === 'NUKE_DEV') {
+        if (pCountry.military >= 70 && pCountry.tech >= 70) {
+          setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, military: t.military - 70, tech: t.tech - 70, nukeStatus: 'DEVELOPING' } : t))
+          setActedRegions(prev => [...prev, pCountry.id])
+          addEvent(t('NUKE_INIT', { name: t(pCountry.name) }))
+        } else {
+          addEvent(t('INSUFFICIENT_NUKE'), 'alert')
+        }
+      }
+      else if (actionType === 'NUKE_LAUNCH') {
+        setNukeTargetMode(selectedCountry.id)
+        addEvent(t('NUKE_PREP'), 'alert')
+      }
   }
 
   const handlePlayerInvasion = (target) => {
-    const invadingRegionId = invasionTargetMode
-    setInvasionTargetMode(false)
+    const invadingRegionId = invasionTargetMode;
+    setInvasionTargetMode(false);
 
-    const pCountry = territories.find(t => t.id === invadingRegionId)
+    const pCountry = territories.find(t => t.id === invadingRegionId);
+    if (!pCountry) return;
 
     if (!pCountry.neighbors.includes(target.id)) {
-      addEvent(`[ERROR] TARGET OUT OF RANGE FROM ${pCountry.name}.`, 'alert')
-      return
+      addEvent(t('OUT_OF_RANGE', { name: t(pCountry.name) }), 'alert');
+      return;
     }
 
     // Mark as acted regardless of win or loss
-    setActedRegions(prev => [...prev, invadingRegionId])
+    setActedRegions(prev => [...prev, invadingRegionId]);
 
-    let pForce = getEffectiveMilitary(pCountry)
-    let tForce = getEffectiveMilitary(target)
+    let pForce = getEffectiveMilitary(pCountry);
+    let tForce = getEffectiveMilitary(target);
 
     // Psionic Shockwave (Defense)
     if (target.isOccupied && target.mutationUnit === 'PSIONIC ALIEN SPECIALIST') {
-      const shockwavePower = Math.floor(target.tech * 0.3)
-      pForce = Math.max(0, pForce - shockwavePower)
-      addEvent(`[WARNING] PSIONIC SHOCKWAVE REDUCED YOUR FORCES IN ${target.name} BY ${shockwavePower} (30% of Tech).`, 'alert')
+      const shockwavePower = Math.floor(target.tech * 0.3);
+      pForce = Math.max(0, pForce - shockwavePower);
+      addEvent(t('PSIONIC_SHOCKWAVE', { name: t(target.name), power: shockwavePower }), 'alert');
     }
 
     if (pForce > tForce) {
-      // Win - VANGUARD PROTOCOL ACTIVATED
+      // Win - MARGIN OF VICTORY (Proposal 1 refined: 2:1 Ratio Distribution)
+      const margin = pForce - tForce;
+      const totalAvailable = margin + 15;
+      const targetMilitary = Math.floor(totalAvailable / 3);
+      const sourceMilitary = totalAvailable - targetMilitary; // Remainder goes to source (approx 2/3)
+
       setTerritories(prev => prev.map(t => {
         if (t.id === target.id) {
-          // Supply Lines: The newly captured territory gets an immediate +15 Military reinforcement
-          return { ...t, military: Math.min(100, Math.floor(t.military / 2) + 15), isOccupied: false, mutationUnit: null }
+          return { ...t, military: Math.min(100, targetMilitary), isOccupied: false, mutationUnit: null };
         }
         if (t.id === pCountry.id) {
-          // Spoils of War: The attacking territory recovers +10 Oil and +10 Tech from the conquest
           return {
             ...t,
-            military: Math.max(0, pCountry.military - Math.floor(tForce / 2)),
+            military: Math.min(100, sourceMilitary),
             oil: Math.min(100, t.oil + 10),
             tech: Math.min(100, t.tech + 10)
-          }
+          };
         }
-        return t
-      }))
-      setPlayerIds(prev => Array.from(new Set([...prev, target.id])))
+        return t;
+      }));
 
-      setAiData(prev => {
-        return prev.map(faction => ({
-          ...faction,
-          territoryIds: faction.territoryIds.filter(id => id !== target.id)
-        }))
-      })
+      setPlayerIds(prev => Array.from(new Set([...prev, target.id])));
 
-      // Check for elimination separately from state transition to avoid duplicates in StrictMode
+      setAiData(prev => prev.map(faction => ({
+        ...faction,
+        territoryIds: faction.territoryIds.filter(id => id !== target.id)
+      })));
+
+      // Check for elimination
       aiData.forEach(faction => {
         if (faction.territoryIds.includes(target.id) && faction.territoryIds.length === 1) {
-          const meta = AI_FACTIONS.find(f => f.id === faction.factionId)
-          addEvent(`[SYSTEM] ${meta.name} HAS BEEN ELIMINATED.`, 'alert')
+          const meta = AI_FACTIONS.find(f => f.id === faction.factionId);
+          if (meta) addEvent(t('FACTION_ELIMINATED', { name: meta.name }), 'alert');
         }
-      })
+      });
 
-      addEvent(`[VANGUARD PROTOCOL] ${target.name} SECURED. (+15 MIL TO TARGET, +10 OIL/TECH SECURED AT ${pCountry.name})`, 'alert')
+      addEvent(t('VANGUARD_SECURED', { name: t(target.name), source: t(pCountry.name) }), 'alert');
     } else {
       // Lose
-      setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, military: Math.max(0, pCountry.military - 30) } : t))
-      addEvent(`[DEFEAT] INVASION DELTA AT ${target.name} FAILED. HEAVY CASUALTIES (-30 MIL).`, 'alert')
+      setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, military: Math.max(0, pCountry.military - 30) } : t));
+      addEvent(t('INVASION_FAILED', { name: t(target.name) }), 'alert');
     }
-  }
+  };
 
   const handlePlayerTransfer = (target) => {
     const sourceId = transferTargetMode
@@ -266,28 +272,28 @@ function App() {
     const source = territories.find(t => t.id === sourceId)
 
     if (!source.neighbors.includes(target.id)) {
-      addEvent(`[ERROR] TARGET OUT OF RANGE FROM ${source.name}.`, 'alert')
+      addEvent(t('OUT_OF_RANGE', { name: t(source.name) }), 'alert')
       return
     }
 
     if (!playerIds.includes(target.id)) {
-      addEvent(`[ERROR] TARGET MUST BE A FRIENDLY SECTOR.`, 'alert')
+      addEvent(t('FRIENDLY_TARGET'), 'alert')
       return
     }
 
     if (source.military <= 25) {
-      addEvent(`[ERROR] INSUFFICIENT TROOPS IN ${source.name} TO TRANSFER.`, 'alert')
+      addEvent(t('INSUFFICIENT_TROOPS', { name: t(source.name) }), 'alert')
       return
     }
 
     setActedRegions(prev => [...prev, sourceId])
-    setTerritories(prev => prev.map(t => {
-      if (t.id === sourceId) return { ...t, military: t.military - 25 }
-      if (t.id === target.id) return { ...t, military: Math.min(100, t.military + 25) }
-      return t
+    setTerritories(prev => prev.map(terr => {
+      if (terr.id === sourceId) return { ...terr, military: terr.military - 25 }
+      if (terr.id === target.id) return { ...terr, military: Math.min(100, terr.military + 25) }
+      return terr
     }))
 
-    addEvent(`[LOGISTICS] 25 UNITS TRANSFERRED FROM ${source.name} TO ${target.name}.`)
+    addEvent(t('TROOPS_TRANSFERRED', { source: t(source.name), target: t(target.name) }))
   }
 
   const handleNukeLaunch = (target) => {
@@ -295,10 +301,10 @@ function App() {
     setNukeTargetMode(false)
 
     // Reset target to 0 Neutral
-    setTerritories(prev => prev.map(t => {
-      if (t.id === target.id) {
+    setTerritories(prev => prev.map(terr => {
+      if (terr.id === target.id) {
         return {
-          ...t,
+          ...terr,
           military: 0,
           oil: 0,
           tech: 0,
@@ -307,19 +313,19 @@ function App() {
           nukeStatus: null
         }
       }
-      if (t.id === sourceId) return { ...t, nukeStatus: null }
-      return t
+      if (terr.id === sourceId) return { ...terr, nukeStatus: null }
+      return terr
     }))
 
     // Check for elimination (Nuke)
     aiData.forEach(faction => {
       if (faction.territoryIds.includes(target.id) && faction.territoryIds.length === 1) {
         const meta = AI_FACTIONS.find(f => f.id === faction.factionId)
-        addEvent(`[SYSTEM] ${meta.name} HAS BEEN ELIMINATED BY NUCLEAR STRIKE.`, 'alert')
+        addEvent(t('ELIMINATED_BY_NUKE', { name: meta.name }), 'alert')
       }
     })
 
-    addEvent(`[NUCLEAR STRIKE] ${target.name} HAS BEEN NEUTRALIZED. TOTAL WIPEOUT.`, 'alert')
+    addEvent(t('NUCLEAR_NEUTRALIZED', { name: t(target.name) }), 'alert')
   }
 
   const handleNextTurn = () => {
@@ -329,16 +335,16 @@ function App() {
     let alienExpansionsThisTurn = 0 // Track total expansions per turn
 
     // Copy states for processing
-    let newTerritories = [...territories].map(t => {
-      const passiveOil = t.trait === 'RESOURCE-RICH'
+    let newTerritories = [...territories].map(terr => {
+      const passiveOil = terr.trait === 'RESOURCE-RICH'
         ? Math.floor(Math.random() * 11) + 5 // 5-15 oil
         : Math.floor(Math.random() * 10) // 0-9 oil
 
       // Update Nuke Status: DEVELOPING -> READY
-      const nextNukeStatus = t.nukeStatus === 'DEVELOPING' ? 'READY' : t.nukeStatus
-      if (t.nukeStatus === 'DEVELOPING') updateLogs.push(`[SYSTEM] NUCLEAR ARSENAL READY AT ${t.name}.`)
+      const nextNukeStatus = terr.nukeStatus === 'DEVELOPING' ? 'READY' : terr.nukeStatus
+      if (terr.nukeStatus === 'DEVELOPING') updateLogs.push(t('NUKE_READY', { name: t(terr.name) }))
 
-      return { ...t, oil: Math.min(100, t.oil + passiveOil), nukeStatus: nextNukeStatus }
+      return { ...terr, oil: Math.min(100, terr.oil + passiveOil), nukeStatus: nextNukeStatus }
     })
     let newAiData = JSON.parse(JSON.stringify(aiData))
     let newPlayerIds = [...playerIds]
@@ -349,24 +355,24 @@ function App() {
       const currentTerritoryIds = [...faction.territoryIds] // Copy because it might change during iteration
 
       currentTerritoryIds.forEach(tId => {
-        const tIndex = newTerritories.findIndex(t => t.id === tId)
+        const tIndex = newTerritories.findIndex(terr => terr.id === tId)
         if (tIndex === -1) return
-        let t = newTerritories[tIndex]
+        let terr = newTerritories[tIndex]
 
         // FIX: Ensure this faction actually still owns this territory (prevent ghosting)
-        const isStillOwned = faction.territoryIds.includes(t.id)
-        const isPlayerOwned = newPlayerIds.includes(t.id)
-        if (isPlayerOwned || t.isOccupied) {
+        const isStillOwned = faction.territoryIds.includes(terr.id)
+        const isPlayerOwned = newPlayerIds.includes(terr.id)
+        if (isPlayerOwned || terr.isOccupied) {
           // This territory was lost to player or alien, cleanup faction data
-          faction.territoryIds = faction.territoryIds.filter(id => id !== t.id)
+          faction.territoryIds = faction.territoryIds.filter(id => id !== terr.id)
           return
         }
 
         // Decide action: Aggressive expansion prioritized if strong enough
-        const validNeighbors = t.neighbors.filter(nId => !faction.territoryIds.includes(nId))
+        const validNeighbors = terr.neighbors.filter(nId => !faction.territoryIds.includes(nId))
         let targetAcquired = null
 
-        let currentTForce = getEffectiveMilitary(t)
+        let currentTForce = getEffectiveMilitary(terr)
 
         if (validNeighbors.length > 0 && currentTForce > 40) {
           // Find weakest neighbor we can confidently beat
@@ -394,12 +400,17 @@ function App() {
 
           let nForce = getEffectiveMilitary(target)
 
-          // AI Wins
-          newTerritories[targetIndex].military = Math.floor(target.military / 2)
-          newTerritories[targetIndex].isOccupied = false
-          newTerritories[targetIndex].mutationUnit = null
+          // AI Wins - 2:1 Ratio Distribution
+          const margin = currentTForce - nForce;
+          const totalAvailable = margin + 15;
+          const targetMilitary = Math.floor(totalAvailable / 3);
+          const sourceMilitary = totalAvailable - targetMilitary;
 
-          newTerritories[tIndex].military = Math.max(0, t.military - Math.floor(nForce / 2))
+          newTerritories[targetIndex].military = Math.min(100, targetMilitary);
+          newTerritories[targetIndex].isOccupied = false;
+          newTerritories[targetIndex].mutationUnit = null;
+
+          newTerritories[tIndex].military = Math.min(100, sourceMilitary);
 
           // Claim territory
           faction.territoryIds.push(target.id)
@@ -410,40 +421,40 @@ function App() {
             if (otherAi.factionId !== faction.factionId) {
               if (otherAi.territoryIds.includes(target.id) && otherAi.territoryIds.length === 1) {
                 const otherMeta = AI_FACTIONS.find(f => f.id === otherAi.factionId)
-                updateLogs.push(`[SYSTEM] ${otherMeta.name} HAS BEEN ELIMINATED.`)
+                updateLogs.push(t('FACTION_ELIMINATED', { name: otherMeta.name }))
               }
               otherAi.territoryIds = otherAi.territoryIds.filter(id => id !== target.id)
             }
           })
 
-          updateLogs.push(`[${factionMetadata.name}] SECURED ${target.name}.`)
-        } else if (t.oil >= 20 && t.tech < 80) {
+          updateLogs.push(t('AI_SECURED', { name: factionMetadata.name, target: t(target.name) }))
+        } else if (terr.oil >= 20 && terr.tech < 80) {
           // Upgrade Tech
-          const bonus = t.trait === 'TECH-CENTRIC' ? 25 : 15
+          const bonus = terr.trait === 'TECH-CENTRIC' ? 25 : 15
           newTerritories[tIndex].oil -= 20
-          newTerritories[tIndex].tech = Math.min(100, t.tech + bonus)
-        } else if (t.tech >= 20) {
+          newTerritories[tIndex].tech = Math.min(100, terr.tech + bonus)
+        } else if (terr.tech >= 20) {
           // Upgrade Military
-          const bonus = t.trait === 'MILITARY POWERHOUSE' ? 25 : 15
+          const bonus = terr.trait === 'MILITARY POWERHOUSE' ? 25 : 15
           newTerritories[tIndex].tech -= 20
-          newTerritories[tIndex].military = Math.min(100, t.military + bonus)
+          newTerritories[tIndex].military = Math.min(100, terr.military + bonus)
         }
 
-        const weakFriendly = t.neighbors
+        const weakFriendly = terr.neighbors
           .map(nId => newTerritories.find(x => x.id === nId))
           .filter(n => faction.territoryIds.includes(n.id) && n.military < 50)
           .sort((a, b) => a.military - b.military)
 
-        if (weakFriendly.length > 0 && t.military > 50) {
+        if (weakFriendly.length > 0 && terr.military > 50) {
           const targetId = weakFriendly[0].id
           newTerritories[tIndex].military -= 25
           const targetIdx = newTerritories.findIndex(x => x.id === targetId)
           newTerritories[targetIdx].military = Math.min(100, newTerritories[targetIdx].military + 25)
-          updateLogs.push(`[${factionMetadata.name}] REDEPLOYED TROOPS TO ${weakFriendly[0].name}.`)
+          updateLogs.push(t('AI_REDEPLOYED', { name: factionMetadata.name, target: t(weakFriendly[0].name) }))
         }
 
         // AI Nuclear Strategy
-        if (t.nukeStatus === 'READY') {
+        if (terr.nukeStatus === 'READY') {
           // Find strongest player or alien territory to target
           const potentialTargets = newTerritories.filter(target =>
             !faction.territoryIds.includes(target.id) && (target.military > 60 || target.isOccupied)
@@ -460,39 +471,39 @@ function App() {
             newAiData.forEach(otherAi => {
               otherAi.territoryIds = otherAi.territoryIds.filter(id => id !== target.id)
             })
-            updateLogs.push(`[STRATEGIC STRIKE] ${factionMetadata.name} LAUNCHED A NUKE AT ${target.name}.`)
+            updateLogs.push(t('AI_NUKE', { name: factionMetadata.name, target: t(target.name) }))
           }
         }
       })
     })
 
     // Alien Logic per territory
-    const alienTerritories = newTerritories.filter(t => t.isOccupied)
+    const alienTerritories = newTerritories.filter(terr => terr.isOccupied)
 
     alienTerritories.forEach(aTerritory => {
-      const aIndex = newTerritories.findIndex(t => t.id === aTerritory.id)
-      let t = newTerritories[aIndex]
+      const aIndex = newTerritories.findIndex(terr => terr.id === aTerritory.id)
+      let terr = newTerritories[aIndex]
 
-      if (t.mutationUnit === 'GIANT RESOURCE HARVESTER') {
+      if (terr.mutationUnit === 'GIANT RESOURCE HARVESTER') {
         // Harvest 10 oil (Reduced from 20)
-        newTerritories[aIndex].oil = Math.min(100, t.oil + 10)
+        newTerritories[aIndex].oil = Math.min(100, terr.oil + 10)
         // Spawn troops if oil >= 80
         if (newTerritories[aIndex].oil >= 80 && newTerritories[aIndex].military < 100) {
           newTerritories[aIndex].oil -= 80
-          newTerritories[aIndex].military = Math.min(100, t.military + 25) // Reduced from 50
-          updateLogs.push(`[ALIEN] GIANT HARVESTER AT ${t.name} SPAWNED REINFORCEMENTS.`)
+          newTerritories[aIndex].military = Math.min(100, terr.military + 25) // Reduced from 50
+          updateLogs.push(t('HIVE_SPAWNED', { name: t(terr.name) }))
         }
       } else {
         // Standard Aliens (Psionic, Mecha) just slowly gain military/tech
-        newTerritories[aIndex].military = Math.min(100, t.military + 10)
-        if (t.mutationUnit === 'PSIONIC ALIEN SPECIALIST') {
-          newTerritories[aIndex].tech = Math.min(100, t.tech + 10)
+        newTerritories[aIndex].military = Math.min(100, terr.military + 10)
+        if (terr.mutationUnit === 'PSIONIC ALIEN SPECIALIST') {
+          newTerritories[aIndex].tech = Math.min(100, terr.tech + 10)
         }
       }
 
       // Alien Ultimate Weapon: Singularity Spore
-      if (t.tech === 100 && Math.random() > 0.5) {
-        const potentialHumanTargets = t.neighbors
+      if (terr.tech === 100 && Math.random() > 0.5) {
+        const potentialHumanTargets = terr.neighbors
           .map(nId => newTerritories.find(x => x.id === nId))
           .filter(n => !n.isOccupied)
           .sort((a, b) => b.military - a.military)
@@ -500,7 +511,7 @@ function App() {
         if (potentialHumanTargets.length > 0) {
           const target = potentialHumanTargets[0]
           const tIdx = newTerritories.findIndex(x => x.id === target.id)
-          newTerritories[tIdx] = { ...newTerritories[tIdx], isOccupied: true, mutationUnit: t.mutationUnit, military: 50, oil: 0, tech: 0 }
+          newTerritories[tIdx] = { ...newTerritories[tIdx], isOccupied: true, mutationUnit: terr.mutationUnit, military: 50, oil: 0, tech: 0 }
 
           // Sync owner cleanup
           newPlayerIds = newPlayerIds.filter(id => id !== target.id)
@@ -508,7 +519,7 @@ function App() {
             otherAi.territoryIds = otherAi.territoryIds.filter(id => id !== target.id)
           })
 
-          updateLogs.push(`[SINGULARITY SPORE] ${t.name} INFECTED ${target.name} COMPLETELY.`)
+          updateLogs.push(t('SINGULARITY_SPORE', { source: t(terr.name), target: t(target.name) }))
           newTerritories[aIndex].tech = 0 // Reset after use
         }
       }
@@ -517,7 +528,7 @@ function App() {
       // GLOBAL LIMIT: Aliens as a whole can only expand a maximum of 3 times per turn
       if (alienExpansionsThisTurn >= 3) return
 
-      const validNeighbors = t.neighbors.filter(nId => !newTerritories.find(x => x.id === nId).isOccupied) // Aliens don't attack aliens
+      const validNeighbors = terr.neighbors.filter(nId => !newTerritories.find(x => x.id === nId).isOccupied) // Aliens don't attack aliens
       let aForce = getEffectiveMilitary(newTerritories[aIndex]) // recalculate after buff
 
       // Lowered threshold so aliens attack more frequently (if force > 40)
@@ -529,7 +540,7 @@ function App() {
             let nForce = getEffectiveMilitary(n)
             let attackerForce = aForce
             // Apply Psionic Shockwave (Attack)
-            if (t.mutationUnit === 'PSIONIC ALIEN SPECIALIST') nForce = Math.max(0, nForce - Math.floor(t.tech * 0.3))
+            if (terr.mutationUnit === 'PSIONIC ALIEN SPECIALIST') nForce = Math.max(0, nForce - Math.floor(terr.tech * 0.3))
             return attackerForce > (nForce + 30)  // Increased threshold from 10 to 30
           })
           .sort((a, b) => getEffectiveMilitary(a) - getEffectiveMilitary(b))
@@ -538,14 +549,14 @@ function App() {
           const target = vulnerableNeighbors[0]
           const targetIndex = newTerritories.findIndex(x => x.id === target.id)
           let nForce = getEffectiveMilitary(target)
-          if (t.mutationUnit === 'PSIONIC ALIEN SPECIALIST') nForce = Math.max(0, nForce - Math.floor(t.tech * 0.3))
+          if (terr.mutationUnit === 'PSIONIC ALIEN SPECIALIST') nForce = Math.max(0, nForce - Math.floor(terr.tech * 0.3))
 
           // Alien Wins Expansion - Hive Resonance!
           // Newly infected territories start with 20 military + small bonus from attacker
           const leftoverAttacker = Math.max(0, newTerritories[aIndex].military - Math.floor(nForce / 2))
           newTerritories[targetIndex].military = 20 + Math.floor(leftoverAttacker * 0.1)
           newTerritories[targetIndex].isOccupied = true
-          newTerritories[targetIndex].mutationUnit = t.mutationUnit // Clone itself
+          newTerritories[targetIndex].mutationUnit = terr.mutationUnit // Clone itself
 
           // HIVE EXHAUSTION: The attacking hive pushes itself to the limit and loses 50% of its remaining force
           newTerritories[aIndex].military = Math.floor(leftoverAttacker * 0.5)
@@ -564,12 +575,12 @@ function App() {
           newAiData.forEach(otherAi => {
             if (otherAi.territoryIds.includes(target.id) && otherAi.territoryIds.length === 1) {
               const otherMeta = AI_FACTIONS.find(f => f.id === otherAi.factionId)
-              updateLogs.push(`[SYSTEM] ${otherMeta.name} HAS BEEN ELIMINATED.`)
+              updateLogs.push(t('FACTION_ELIMINATED', { name: otherMeta.name }))
             }
             otherAi.territoryIds = otherAi.territoryIds.filter(id => id !== target.id)
           })
 
-          updateLogs.push(`[MUTATION SPREADS] INFECTION FROM ${t.name} CONSUMED ${target.name}!`)
+          updateLogs.push(t('INFECTION_CONSUMED', { source: t(terr.name), target: t(target.name) }))
         }
       }
     })
@@ -578,23 +589,23 @@ function App() {
     const nextTurn = turn + 1
     if (nextTurn >= 2 && (nextTurn - 2) % 5 === 0) {
       const allOwnedIds = [...newPlayerIds, ...newAiData.flatMap(f => f.territoryIds)]
-      const unOccupied = newTerritories.filter(t => !t.isOccupied && !allOwnedIds.includes(t.id))
+      const unOccupied = newTerritories.filter(node => !node.isOccupied && !allOwnedIds.includes(node.id))
 
       if (unOccupied.length > 0) {
         // Spawn up to 2 aliens during a wave to be threatening
         const spawnCount = Math.min(2, unOccupied.length)
         for (let i = 0; i < spawnCount; i++) {
-          const availableTargets = newTerritories.filter(t => !t.isOccupied && !allOwnedIds.includes(t.id))
+          const availableTargets = newTerritories.filter(node => !node.isOccupied && !allOwnedIds.includes(node.id))
           if (availableTargets.length === 0) break;
 
           const target = availableTargets[Math.floor(Math.random() * availableTargets.length)]
           let mut = target.trait === 'TECH-CENTRIC' ? 'PSIONIC ALIEN SPECIALIST' :
             target.trait === 'RESOURCE-RICH' ? 'GIANT RESOURCE HARVESTER' : 'HEAVILY ARMORED MECHA ALIEN'
 
-          const tIdx = newTerritories.findIndex(t => t.id === target.id)
+          const tIdx = newTerritories.findIndex(node => node.id === target.id)
           // Give them a starting military boost so they don't die instantly
           newTerritories[tIdx] = { ...newTerritories[tIdx], isOccupied: true, mutationUnit: mut, military: Math.max(50, target.military) }
-          updateLogs.push(`[ALIEN THREAT] ${target.name}: OCCUPIED BY NEW MUTANTS. ${mut} SPAWNED.`)
+          updateLogs.push(t('ALIEN_SPAWNED', { name: t(target.name), mut: t(mut) }))
         }
       }
     }
@@ -604,7 +615,7 @@ function App() {
     setTerritories(newTerritories)
 
     updateLogs.forEach(log => addEvent(log, 'alert'))
-    if (updateLogs.length === 0) addEvent(`TURN ${turn + 1} BEGUN. FORCES DEPLOYED.`)
+    if (updateLogs.length === 0) addEvent(t('TURN_BEGUN', { turn: turn + 1 }))
   }
 
   return (
@@ -620,19 +631,27 @@ function App() {
       {/* Header */}
       <div className="flex justify-between items-center border-b-4 border-pixel-border pb-2">
         <div className="flex flex-col">
-          <h1 className="text-xl md:text-2xl text-white tracking-widest leading-none">NEURAL STRATAGEM</h1>
+          <h1 className="text-xl md:text-2xl text-white tracking-widest leading-none">{t('GAME_TITLE')}</h1>
           <span className="text-[10px] text-blue-400 mt-1">
-            {gameState === 'SELECT_START' ? 'INITIALIZATION: CHOOSE YOUR COMMAND NODE' : `TURN: ${turn} | STATUS: OPERATIONAL`}
+            {gameState === 'SELECT_START' ? t('INITIALIZATION_STATUS') : t('TURN_STATUS', { turn })}
           </span>
         </div>
         <div className="flex gap-4 items-center">
+          {/* Language Switcher */}
+          <button
+            onClick={toggleLanguage}
+            className="bg-blue-700 hover:bg-blue-600 border-2 border-pixel-border shadow-pixel px-3 py-1 text-[10px] text-white active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+          >
+            {lang === 'en' ? 'KO' : 'EN'}
+          </button>
+          
           {gameState !== 'SELECT_START' && (
             <button
               onClick={handleNextTurn}
               disabled={invasionTargetMode}
               className="bg-red-700 hover:bg-red-600 disabled:bg-slate-700 disabled:text-slate-500 border-2 border-pixel-border shadow-pixel px-4 py-2 text-[10px] text-white active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
             >
-              NEXT TURN
+              {t('NEXT_TURN')}
             </button>
           )}
         </div>
@@ -676,9 +695,9 @@ function App() {
 
           {(invasionTargetMode || transferTargetMode || nukeTargetMode) && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/80 border-2 border-blue-500 text-blue-100 text-[10px] px-4 py-2 animate-pulse pointer-events-none z-20">
-              {invasionTargetMode ? 'TARGET NEIGHBORING SECTOR FOR INVASION' :
-                nukeTargetMode ? 'SELECT ANY TARGET FOR NUCLEAR STRIKE' :
-                  'SELECT FRIENDLY NEIGHBOR FOR TRANSFER'}
+              {invasionTargetMode ? t('TARGET_HINT_INVASION') :
+                nukeTargetMode ? t('TARGET_HINT_NUKE') :
+                  t('TARGET_HINT_TRANSFER')}
             </div>
           )}
         </div>

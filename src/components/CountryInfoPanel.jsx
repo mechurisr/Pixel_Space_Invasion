@@ -1,49 +1,62 @@
 import React from 'react'
 import { PixelPanel } from './PixelPanel'
 import { OilIcon, TechIcon, MilitaryIcon } from './Icons'
+import { useLanguage } from '../LanguageContext'
 
 export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecuteProtocol, gameState, isTargetingMode }) => {
+    const { t } = useLanguage()
+
     if (!country) return (
-        <PixelPanel title="COMMAND CENTER" className="h-full">
+        <PixelPanel title={t('COMMAND_CENTER')} className="h-full">
             <div className="flex flex-col items-center justify-center h-full space-y-4">
                 {gameState === 'SELECT_START' ? (
-                    <p className="text-[10px] text-yellow-400 animate-pulse text-center">SELECT A NODE ON THE MAP TO ESTABLISH YOUR BASE.</p>
+                    <p className="text-[10px] text-yellow-400 animate-pulse text-center">{t('SELECT_START_NODE')}</p>
                 ) : (
                     <>
                         <div className="w-12 h-12 border-4 border-pixel-border/20 flex items-center justify-center">
                             <div className="w-4 h-4 bg-pixel-border/20 animate-ping"></div>
                         </div>
-                        <p className="text-[8px] text-slate-500 text-center tracking-widest">AWAITING SECTOR UPLINK...</p>
+                        <p className="text-[8px] text-slate-500 text-center tracking-widest">{t('AWAITING_UPLINK')}</p>
                     </>
                 )}
             </div>
         </PixelPanel>
     )
 
+    const getTraitLabel = (trait) => {
+        if (trait === 'MILITARY POWERHOUSE') return t('MILITARY_POWERHOUSE')
+        if (trait === 'TECH-CENTRIC') return t('TECH_CENTRIC')
+        if (trait === 'RESOURCE-RICH') return t('RESOURCE_RICH')
+        return t('STANDARD')
+    }
+
+    const getMutationLabel = (unit) => {
+        if (unit === 'HEAVILY ARMORED MECHA ALIEN') return t('HEAVILY_ARMORED_MECHA_ALIEN')
+        if (unit === 'PSIONIC ALIEN SPECIALIST') return t('PSIONIC_ALIEN_SPECIALIST')
+        if (unit === 'GIANT RESOURCE HARVESTER') return t('GIANT_RESOURCE_HARVESTER')
+        return unit
+    }
+
     return (
-        <PixelPanel title="SECTOR ANALYSIS" className="h-full">
+        <PixelPanel title={t('SECTOR_ANALYSIS')} className="h-full">
             <div className="space-y-6">
                 <div>
                     <h2 className={`text-lg mb-1 leading-tight ${country.isOccupied ? 'text-purple-500' : 'text-yellow-400'}`}>
-                        {country.name}
+                        {t(country.name)}
                     </h2>
                     <div className={`inline-block px-2 py-1 border-2 text-[7px] mb-2 ${country.isOccupied
                         ? 'bg-purple-900/50 border-purple-500 text-purple-300'
                         : 'bg-blue-900/50 border-blue-500/50 text-blue-300'
                         }`}>
-                        {country.isOccupied ? '☣ ALIEN COLONY' : (
-                            country.trait === 'MILITARY POWERHOUSE' ? '⚔ MILITARY POWERHOUSE (+25 MIL)' :
-                                country.trait === 'TECH-CENTRIC' ? '🧬 TECH-CENTRIC (+25 TECH)' :
-                                    country.trait === 'RESOURCE-RICH' ? '⛽ RESOURCE-RICH (+OIL)' : country.trait
-                        )}
+                        {country.isOccupied ? t('ALIEN_COLONY') : getTraitLabel(country.trait)}
                     </div>
-                    <p className="text-[7px] text-slate-500 font-mono">ID: {country.id} | LOC: {country.code}</p>
+                    <p className="text-[7px] text-slate-500 font-mono">{t('ID_LABEL')}: {country.id} | {t('LOC_LABEL')}: {country.code}</p>
                 </div>
 
                 {country.isOccupied && (
                     <div className="p-3 bg-purple-900/30 border-2 border-purple-600 animate-pulse">
-                        <p className="text-[8px] text-purple-400 font-bold mb-2">⚠ MUTATION DETECTED:</p>
-                        <p className="text-[10px] text-white leading-tight">{country.mutationUnit}</p>
+                        <p className="text-[8px] text-purple-400 font-bold mb-2">{t('MUTATION_DETECTED')}</p>
+                        <p className="text-[10px] text-white leading-tight">{getMutationLabel(country.mutationUnit)}</p>
                     </div>
                 )}
 
@@ -52,7 +65,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                     <div className="space-y-1">
                         <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'text-purple-400' : 'text-red-400'}`}>
                             <div className="flex items-center gap-1">
-                                <MilitaryIcon /> <span>MILITARY FORCE</span>
+                                <MilitaryIcon /> <span>{t('MILITARY_FORCE')}</span>
                             </div>
                             <span>{country.military}%</span>
                         </div>
@@ -68,7 +81,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                     <div className="space-y-1">
                         <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'GIANT RESOURCE HARVESTER' ? 'text-purple-400' : 'text-yellow-500'}`}>
                             <div className="flex items-center gap-1">
-                                <OilIcon /> <span>CRUDE OIL</span>
+                                <OilIcon /> <span>{t('CRUDE_OIL')}</span>
                             </div>
                             <span>{country.oil}%</span>
                         </div>
@@ -84,7 +97,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                     <div className="space-y-1">
                         <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'PSIONIC ALIEN SPECIALIST' ? 'text-purple-400' : 'text-blue-400'}`}>
                             <div className="flex items-center gap-1">
-                                <TechIcon /> <span>TECH ASSETS</span>
+                                <TechIcon /> <span>{t('TECH_ASSETS')}</span>
                             </div>
                             <span>{country.tech}%</span>
                         </div>
@@ -103,7 +116,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                             onClick={() => onExecuteProtocol('NUKE_LAUNCH')}
                             className="w-full mb-3 bg-red-950 hover:bg-red-900 border-2 border-red-500 text-red-100 py-3 text-[10px] animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]"
                         >
-                            ☢ LAUNCH NUCLEAR STRIKE ☢
+                            {t('LAUNCH_NUKES')}
                         </button>
                     )}
 
@@ -118,7 +131,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                                 : 'bg-slate-800 border-slate-700 text-slate-600 cursor-not-allowed'}
             `}
                     >
-                        {!isPlayerOwned ? 'RESTRICTED ACCESS' : hasActed ? 'ACTION ALREADY TAKEN' : isTargetingMode ? 'CANCEL TARGETING' : 'EXECUTE PROTOCOL'}
+                        {!isPlayerOwned ? t('RESTRICTED_ACCESS') : hasActed ? t('ACTION_ALREADY_TAKEN') : isTargetingMode ? t('CANCEL_TARGETING') : t('EXECUTE_PROTOCOL')}
                     </button>
                 </div>
             </div>

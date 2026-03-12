@@ -1,6 +1,8 @@
 import React from 'react'
+import { useLanguage } from '../LanguageContext'
 
 export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [] }) => {
+    const { t } = useLanguage()
     return (
         <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border overflow-auto">
             <div className="min-w-[1200px] min-h-[600px] w-full h-full relative">
@@ -22,36 +24,36 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                 </svg>
 
                 {/* Nodes */}
-                {territories.map((t) => {
-                    const isPlayer = playerIds?.includes(t.id)
-                    const isSelected = selectedId === t.id
-                    const canAct = isPlayer && !actedRegions.includes(t.id)
+                {territories.map((node) => {
+                    const isPlayer = playerIds?.includes(node.id)
+                    const isSelected = selectedId === node.id
+                    const canAct = isPlayer && !actedRegions.includes(node.id)
 
                     // Check AI Owner
-                    const owningAi = aiData?.find(f => f.territoryIds.includes(t.id))
+                    const owningAi = aiData?.find(f => f.territoryIds.includes(node.id))
                     const aiMeta = owningAi ? aiFactions?.find(f => f.id === owningAi.factionId) : null
 
                     // Targetable if it's a neighbor of the CURRENTLY invading region
-                    const isTargetable = invasionTargetMode && territories.find(pt => pt.id === invasionTargetMode)?.neighbors.includes(t.id)
+                    const isTargetable = invasionTargetMode && territories.find(pt => pt.id === invasionTargetMode)?.neighbors.includes(node.id)
 
                     // Transfer targetable if it's a neighbor of the source region AND is player owned
-                    const isTransferTargetable = transferTargetMode && territories.find(st => st.id === transferTargetMode)?.neighbors.includes(t.id) && isPlayer
+                    const isTransferTargetable = transferTargetMode && territories.find(st => st.id === transferTargetMode)?.neighbors.includes(node.id) && isPlayer
 
                     // Nuke targetable is ANY region
-                    const isNukeTarget = nukeTargetMode && t.id !== nukeTargetMode
+                    const isNukeTarget = nukeTargetMode && node.id !== nukeTargetMode
 
                     let nodeClass = 'bg-slate-800/80 border-slate-600 focus:bg-slate-700'
                     let textClass = 'text-slate-300'
                     let label = null
 
-                    if (t.isOccupied) {
+                    if (node.isOccupied) {
                         nodeClass = 'bg-purple-950/90 border-purple-800 text-purple-400 animate-pulse'
                         textClass = 'text-purple-300'
                     }
                     else if (isPlayer) {
                         nodeClass = 'bg-green-600/80 border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)]'
                         textClass = 'text-white'
-                        label = <span className="absolute -top-4 text-[6px] text-green-400 drop-shadow-md">OWNED</span>
+                        label = <span className="absolute -top-4 text-[6px] text-green-400 drop-shadow-md">{t('OWNED_LABEL')}</span>
                     }
                     else if (aiMeta) {
                         nodeClass = `bg-gray-900/90 border-2 ${aiMeta.borderClass} ${aiMeta.bgClass?.replace('900', '800')} shadow-lg`
@@ -71,9 +73,9 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
 
                     return (
                         <button
-                            key={t.id}
-                            onClick={() => onSelect(t)}
-                            style={{ left: `${t.x}%`, top: `${t.y}%`, transform: 'translate(-50%, -50%)' }}
+                            key={node.id}
+                            onClick={() => onSelect(node)}
+                            style={{ left: `${node.x}%`, top: `${node.y}%`, transform: 'translate(-50%, -50%)' }}
                             className={`
                   absolute w-8 h-8 md:w-12 md:h-12 border-2 shadow-pixel transition-all duration-200
                   ${nodeClass}
@@ -82,9 +84,9 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                         >
                             {label}
                             <span className={`text-[5px] md:text-[6px] font-bold ${textClass} transition-colors text-center leading-none px-1`}>
-                                {t.isOccupied ? '☣' : t.code}
+                                {node.isOccupied ? '☣' : node.code}
                             </span>
-                            {t.hasEvent && !t.isOccupied && (
+                            {node.hasEvent && !node.isOccupied && (
                                 <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 animate-ping rounded-full -mt-1 -mr-1"></div>
                             )}
                             {canAct && (

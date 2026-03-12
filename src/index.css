@@ -1,9 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css');
 
 @import "tailwindcss";
 
 @theme {
-  --font-pixel: "Press Start 2P", system-ui;
+  --font-pixel: "Press Start 2P", "Galmuri11", "Galmuri9", system-ui;
   --color-pixel-bg: #0f172a;
   --color-pixel-panel: #1e293b;
   --color-pixel-border: #000000;
