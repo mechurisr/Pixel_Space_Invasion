@@ -495,9 +495,9 @@ function App() {
         }
       } else {
         // Standard Aliens (Psionic, Mecha) just slowly gain military/tech
-        newTerritories[aIndex].military = Math.min(100, terr.military + 10)
+        newTerritories[aIndex].military = Math.min(100, terr.military + 5)
         if (terr.mutationUnit === 'PSIONIC ALIEN SPECIALIST') {
-          newTerritories[aIndex].tech = Math.min(100, terr.tech + 10)
+          newTerritories[aIndex].tech = Math.min(100, terr.tech + 5)
         }
       }
 
@@ -562,11 +562,11 @@ function App() {
           newTerritories[aIndex].military = Math.floor(leftoverAttacker * 0.5)
           alienExpansionsThisTurn++
 
-          // HIVE RESONANCE: All existing adjacent alien neighbors gain +5 military
+          // HIVE RESONANCE: All existing adjacent alien neighbors gain +2 military
           target.neighbors.forEach(nId => {
             const nIdx = newTerritories.findIndex(nt => nt.id === nId)
             if (nIdx !== -1 && newTerritories[nIdx].isOccupied && nId !== target.id) {
-              newTerritories[nIdx].military = Math.min(100, newTerritories[nIdx].military + 5)
+              newTerritories[nIdx].military = Math.min(100, newTerritories[nIdx].military + 2)
             }
           })
 
