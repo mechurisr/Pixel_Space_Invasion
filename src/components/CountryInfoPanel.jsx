@@ -61,22 +61,6 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                 )}
 
                 <div className="space-y-5">
-                    {/* Military */}
-                    <div className="space-y-1">
-                        <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'text-purple-400' : 'text-red-400'}`}>
-                            <div className="flex items-center gap-1">
-                                <MilitaryIcon /> <span>{t('MILITARY_FORCE')}</span>
-                            </div>
-                            <span>{country.military}%</span>
-                        </div>
-                        <div className="w-full h-3 bg-black/50 border-2 border-pixel-border p-[1px]">
-                            <div
-                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'bg-purple-600' : 'bg-red-600'}`}
-                                style={{ width: `${country.military}%` }}
-                            ></div>
-                        </div>
-                    </div>
-
                     {/* Oil */}
                     <div className="space-y-1">
                         <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'GIANT RESOURCE HARVESTER' ? 'text-purple-400' : 'text-yellow-500'}`}>
@@ -105,6 +89,22 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                             <div
                                 className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'PSIONIC ALIEN SPECIALIST' ? 'bg-purple-600' : 'bg-blue-600'}`}
                                 style={{ width: `${country.tech}%` }}
+                            ></div>
+                        </div>
+                    </div>
+
+                    {/* Military */}
+                    <div className="space-y-1">
+                        <div className={`flex justify-between items-center text-[8px] ${country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'text-purple-400' : 'text-red-400'}`}>
+                            <div className="flex items-center gap-1">
+                                <MilitaryIcon /> <span>{t('MILITARY_FORCE')}</span>
+                            </div>
+                            <span>{country.military}%</span>
+                        </div>
+                        <div className="w-full h-3 bg-black/50 border-2 border-pixel-border p-[1px]">
+                            <div
+                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'bg-purple-600' : 'bg-red-600'}`}
+                                style={{ width: `${country.military}%` }}
                             ></div>
                         </div>
                     </div>

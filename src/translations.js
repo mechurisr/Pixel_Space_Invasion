@@ -25,6 +25,37 @@ export const translations = {
         GLOBAL_EVENT_LOG: "GLOBAL EVENT LOG",
         WAITING_FOR_INTEL: "WAITING FOR INTEL...",
 
+        // Intro Screen
+        INTRO_TITLE: "NEURAL STRATAGEM: BRIEFING",
+        INTRO_RESOURCE_FLOW: "RESOURCE CYCLE",
+        INTRO_EXTRACT: "EXTRACT",
+        INTRO_RESEARCH: "RESEARCH",
+        INTRO_CONQUER: "MILITARIZE",
+        INTRO_PROTOCOLS: "COMMAND PROTOCOLS",
+        INTRO_TECH_DESC: "+TECH",
+        INTRO_MIL_DESC: "+MIL",
+        INTRO_TRANSFER_DESC: "MOVE",
+        INTRO_NUKE_DESC: "ANNIHILATE",
+        INTRO_THREATS: "GLOBAL THREATS",
+        INTRO_ALIEN_THREAT: "ALIEN SWARM: Mutates & Expands. Beware Spores at Max Tech.",
+        INTRO_ALIEN_MECHA: "HEAVILY ARMORED: +50% effective military force.",
+        INTRO_ALIEN_PSIONIC: "PSIONIC SPECIALIST: Weakens attackers by 30% of its Tech.",
+        INTRO_ALIEN_HARVESTER: "GIANT HARVESTER: Consumes 80 Oil to spawn +25 Military.",
+        INTRO_AI_THREAT: "RIVAL FACTIONS: 5 AI Commanders competing for total control.",
+        INTRO_TURN_RULES: "TURN MECHANICS",
+        INTRO_TURN_DESC_1: "Execute 1 Protocol per node each turn (Blue '!' indicates readiness).",
+        INTRO_TURN_DESC_2: "Press NEXT TURN when finished to advance the global timeline.",
+        START_GAME: "INITIALIZE UPLINK",
+
+        VICTORY_TITLE: "VICTORY ACHIEVED",
+        VICTORY_DESC: "Global domination secured. All hostile threats have been neutralized.",
+        DEFEAT_TITLE: "UPLINK SEVERED",
+        DEFEAT_DESC: "Command center lost. The Earth belongs to the invaders.",
+        PLAY_AGAIN: "REINITIALIZE UPLINK",
+        RESTART_BTN: "RESTART",
+        CONFIRM_RESTART: "Are you sure you want to restart? All unsaved progress will be lost.",
+
+
         // Factions
         BLUE_CORSAIR: "BLUE CORSAIR",
         YELLOW_SWARM: "YELLOW SWARM",
@@ -66,7 +97,7 @@ export const translations = {
         // Event Logs
         SYSTEM_INITIALIZED: "SYSTEM INITIALIZED. SELECT A COMMAND NODE.",
         COMMAND_ESTABLISHED: "COMMAND ESTABLISHED AT {name}. 5 HOSTILE FACTIONS DETECTED.",
-        RESOURCES_ALLOCATED: "[SYSTEM] STARTER RESOURCES ALLOCATED: 60 MIL / 40 OIL / 40 TECH.",
+        RESOURCES_ALLOCATED: "[SYSTEM] STARTER RESOURCES ALLOCATED: 40 OIL / 40 TECH / 60 MIL.",
         TECH_UPGRADED: "[{name}] TECHNOLOGY UPGRADED. (-20 OIL, +{bonus} TECH)",
         MIL_REINFORCED: "[{name}] MILITARY REINFORCED. (-20 TECH, +{bonus} MILITARY)",
         INVASION_PREP: "[COMBAT PROTOCOL] {name} PREPARING INVASION. SELECT A TARGET.",
@@ -183,6 +214,37 @@ export const translations = {
         GLOBAL_EVENT_LOG: "전역 이벤트 로그",
         WAITING_FOR_INTEL: "정보 대기 중...",
 
+        // Intro Screen
+        INTRO_TITLE: "신경망 전략: 작전 브리핑",
+        INTRO_RESOURCE_FLOW: "자원 사이클",
+        INTRO_EXTRACT: "추출",
+        INTRO_RESEARCH: "연구",
+        INTRO_CONQUER: "군비 증강",
+        INTRO_PROTOCOLS: "지휘 프로토콜",
+        INTRO_TECH_DESC: "+기술",
+        INTRO_MIL_DESC: "+군사",
+        INTRO_TRANSFER_DESC: "이동",
+        INTRO_NUKE_DESC: "초토화",
+        INTRO_THREATS: "글로벌 위협",
+        INTRO_ALIEN_THREAT: "외계 군락: 변이 및 확장. 기술 극대화 시 포자 살포 주의.",
+        INTRO_ALIEN_MECHA: "중장갑 메카: 전투 시 실질 군사력 1.5배 효율 증폭",
+        INTRO_ALIEN_PSIONIC: "사이오닉 전문가: 방어 시 기술력의 30%만큼 적 군사력 약화",
+        INTRO_ALIEN_HARVESTER: "자원 채집가: 원유 80 도달 시 즉시 군사력 +25 증원",
+        INTRO_AI_THREAT: "경쟁 세력: 완전한 통제를 노리는 5명의 AI 사령관.",
+        INTRO_TURN_RULES: "턴 흐름",
+        INTRO_TURN_DESC_1: "구역 당 한 턴에 1개의 프로토콜만 실행할 수 있습니다 (파란색 '!' 표시 구간).",
+        INTRO_TURN_DESC_2: "모든 명령을 내린 후 NEXT TURN(다음 턴)을 눌러 시간을 진행하세요.",
+        START_GAME: "연결 초기화 (시작)",
+
+        VICTORY_TITLE: "승리",
+        VICTORY_DESC: "모든 구역을 장악하고 전 지구적 위협을 제거했습니다.",
+        DEFEAT_TITLE: "패배",
+        DEFEAT_DESC: "지휘 통제소를 잃었습니다. 지구는 이제 침략자들의 것입니다.",
+        PLAY_AGAIN: "재연결 시도 (다시 시작)",
+        RESTART_BTN: "다시 시작",
+        CONFIRM_RESTART: "정말 처음부터 다시 시작하시겠습니까? 현재 진행 상황이 모두 삭제됩니다.",
+
+
         // Factions
         BLUE_CORSAIR: "블루 코세어 (BLUE CORSAIR)",
         YELLOW_SWARM: "옐로우 스웜 (YELLOW SWARM)",
@@ -224,7 +286,7 @@ export const translations = {
         // Event Logs
         SYSTEM_INITIALIZED: "시스템 초기화 완료. 지휘 노드를 선택하십시오.",
         COMMAND_ESTABLISHED: "{name}에 지휘본부가 설립되었습니다. 5개 적대 세력이 탐지되었습니다.",
-        RESOURCES_ALLOCATED: "[시스템] 초기 자원 할당: 60 군사 / 40 원유 / 40 기술.",
+        RESOURCES_ALLOCATED: "[시스템] 초기 자원 할당: 40 원유 / 40 기술 / 60 군사.",
         TECH_UPGRADED: "[{name}] 기술 업그레이드 완료. (-20 원유, +{bonus} 기술)",
         MIL_REINFORCED: "[{name}] 군사 보충 완료. (-20 기술, +{bonus} 군사)",
         INVASION_PREP: "[전투 프로토콜] {name} 침공 준비 중. 목표를 선택하십시오.",

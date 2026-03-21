@@ -3,6 +3,8 @@ import { CountryInfoPanel } from './components/CountryInfoPanel'
 import { InteractiveMap } from './components/InteractiveMap'
 import { EventLogPanel } from './components/EventLogPanel'
 import { ActionModal } from './components/ActionModal'
+import { GameIntroModal } from './components/GameIntroModal'
+import { GameOverModal } from './components/GameOverModal'
 import { generateWorldMap } from './mapData'
 import { useLanguage } from './LanguageContext'
 
@@ -14,6 +16,8 @@ const getAiFactions = (t) => [
   { id: 'AI-5', colorClass: 'text-orange-400', name: t('ORANGE_VANGUARD') },
 ]
 
+const SAVE_KEY = 'pixel_space_invasion_save'
+
 const getEffectiveMilitary = (country) => {
   if (country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN') {
     return Math.floor(country.military * 1.5)
@@ -24,24 +28,85 @@ function App() {
   const { t, lang, toggleLanguage } = useLanguage()
   const AI_FACTIONS = getAiFactions(t)
 
-  const [gameState, setGameState] = useState('SELECT_START') // SELECT_START, PLAYING, GAME_OVER
-  const [territories, setTerritories] = useState(generateWorldMap())
+  const initialSave = React.useMemo(() => {
+    try {
+      const saved = localStorage.getItem(SAVE_KEY)
+      if (saved) return JSON.parse(saved)
+    } catch (e) { console.error('Error loading save game', e) }
+    return null
+  }, [])
+
+  const [gameState, setGameState] = useState(initialSave?.gameState || 'INTRO') // INTRO, SELECT_START, PLAYING, GAME_OVER
+  const [territories, setTerritories] = useState(initialSave?.territories || generateWorldMap())
   const [selectedCountryId, setSelectedCountryId] = useState(null)
 
   const selectedCountry = territories.find(t => t.id === selectedCountryId) || null
 
-  const [playerIds, setPlayerIds] = useState([])
-  const [aiData, setAiData] = useState([]) // Array of { factionId, territoryIds: [] }
-  const [actedRegions, setActedRegions] = useState([])
-  const [turn, setTurn] = useState(1)
-  const [events, setEvents] = useState([
-    { timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }
-  ])
+  const [playerIds, setPlayerIds] = useState(initialSave?.playerIds || [])
+  const [aiData, setAiData] = useState(initialSave?.aiData || []) // Array of { factionId, territoryIds: [] }
+  const [actedRegions, setActedRegions] = useState(initialSave?.actedRegions || [])
+  const [turn, setTurn] = useState(initialSave?.turn || 1)
+  const [events, setEvents] = useState(() => {
+    return initialSave?.events || [{ timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }]
+  })
 
   const [showActionModal, setShowActionModal] = useState(false)
   const [invasionTargetMode, setInvasionTargetMode] = useState(false)
   const [transferTargetMode, setTransferTargetMode] = useState(false)
   const [nukeTargetMode, setNukeTargetMode] = useState(false)
+
+  // Win/Loss Condition Check
+  React.useEffect(() => {
+    if (gameState === 'PLAYING') {
+      if (playerIds.length === 0) {
+        setGameState('GAME_OVER_DEFEAT')
+        addEvent(t('DEFEAT_DESC'), 'alert')
+      } else if (playerIds.length === territories.length) {
+        setGameState('GAME_OVER_VICTORY')
+        addEvent(t('VICTORY_DESC'), 'alert')
+      }
+    }
+  }, [playerIds, territories, gameState, t])
+
+  // Auto-Save Effect
+  React.useEffect(() => {
+    if (gameState === 'PLAYING') {
+      const saveData = {
+        gameState,
+        territories,
+        playerIds,
+        aiData,
+        actedRegions,
+        turn,
+        events
+      }
+      localStorage.setItem(SAVE_KEY, JSON.stringify(saveData))
+    } else if (gameState === 'GAME_OVER_VICTORY' || gameState === 'GAME_OVER_DEFEAT') {
+      localStorage.removeItem(SAVE_KEY)
+    }
+  }, [gameState, territories, playerIds, aiData, actedRegions, turn, events])
+
+  const handleRestartGame = () => {
+    localStorage.removeItem(SAVE_KEY)
+    setTerritories(generateWorldMap())
+    setPlayerIds([])
+    setAiData([])
+    setActedRegions([])
+    setTurn(1)
+    setEvents([{ timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), type: 'info', message: t('SYSTEM_INITIALIZED') }])
+    setSelectedCountryId(null)
+    setInvasionTargetMode(false)
+    setTransferTargetMode(false)
+    setNukeTargetMode(false)
+    setShowActionModal(false)
+    setGameState('INTRO')
+  }
+
+  const handleManualRestart = () => {
+    if (window.confirm(t('CONFIRM_RESTART'))) {
+      handleRestartGame()
+    }
+  }
 
   const addEvent = (message, type = 'info') => {
     const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
@@ -620,6 +685,18 @@ function App() {
 
   return (
     <div className="h-screen w-full bg-pixel-bg p-4 flex flex-col gap-4 font-pixel select-none relative">
+      {gameState === 'INTRO' && (
+        <GameIntroModal onStart={() => setGameState('SELECT_START')} />
+      )}
+      
+      {gameState === 'GAME_OVER_VICTORY' && (
+        <GameOverModal result="VICTORY" onRestart={handleRestartGame} />
+      )}
+
+      {gameState === 'GAME_OVER_DEFEAT' && (
+        <GameOverModal result="DEFEAT" onRestart={handleRestartGame} />
+      )}
+      
       {showActionModal && selectedCountry && (
         <ActionModal
           country={selectedCountry}
@@ -644,8 +721,18 @@ function App() {
           >
             {lang === 'en' ? 'KO' : 'EN'}
           </button>
+
+          {/* Manual Restart Button */}
+          {gameState !== 'INTRO' && (
+            <button
+              onClick={handleManualRestart}
+              className="bg-slate-700 hover:bg-slate-600 border-2 border-pixel-border shadow-pixel px-3 py-1 text-[10px] text-white active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+            >
+              {t('RESTART_BTN')}
+            </button>
+          )}
           
-          {gameState !== 'SELECT_START' && (
+          {gameState !== 'SELECT_START' && gameState !== 'INTRO' && (
             <button
               onClick={handleNextTurn}
               disabled={invasionTargetMode}
