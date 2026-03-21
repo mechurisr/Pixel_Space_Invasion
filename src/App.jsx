@@ -708,7 +708,10 @@ function App() {
       {/* Header */}
       <div className="flex justify-between items-center border-b-4 border-pixel-border pb-2">
         <div className="flex flex-col">
-          <h1 className="text-xl md:text-2xl text-white tracking-widest leading-none">{t('GAME_TITLE')}</h1>
+          <div className="flex items-baseline gap-2 md:gap-3">
+            <h1 className="text-xl md:text-2xl text-white tracking-widest leading-none">{t('GAME_TITLE')}</h1>
+            <span className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-wider">Powered by Reality Is Overrated</span>
+          </div>
           <span className="text-[10px] text-blue-400 mt-1">
             {gameState === 'SELECT_START' ? t('INITIALIZATION_STATUS') : t('TURN_STATUS', { turn })}
           </span>
