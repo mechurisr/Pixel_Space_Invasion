@@ -8,8 +8,8 @@ export const generateWorldMap = () => {
         { id: 4, name: "Calgary", x: 17, y: 16, neighbors: [1, 5, 10] },
         { id: 5, name: "Denver", x: 18, y: 28, neighbors: [2, 4, 6, 11] },
         { id: 6, name: "Los Angeles", x: 13, y: 40, neighbors: [3, 5, 7, 8, 58] },
-        { id: 7, name: "Mexico City", x: 16, y: 50, neighbors: [6, 9, 13] },
-        { id: 8, name: "Texas Base", x: 19, y: 42, neighbors: [3, 6, 9, 11] },
+        { id: 7, name: "Mexico City", x: 16, y: 50, neighbors: [6, 8, 9, 13] },
+        { id: 8, name: "Texas Base", x: 19, y: 42, neighbors: [3, 5, 6, 7, 9, 11] },
         { id: 9, name: "Miami", x: 25, y: 44, neighbors: [7, 8, 12, 13] },
         { id: 10, name: "Toronto", x: 23, y: 18, neighbors: [4, 11, 23, 30] },
         { id: 11, name: "Chicago", x: 22, y: 26, neighbors: [5, 8, 10, 12] },
@@ -75,6 +75,17 @@ export const generateWorldMap = () => {
         { id: 59, name: "Kamchatka", x: 94, y: 18, neighbors: [44, 58] }, // Removed Bering Strait direct connection to simplify
         { id: 60, name: "Auckland", x: 95, y: 88, neighbors: [57, 58, 19] }
     ]
+
+    // 100% 양방향(Bi-directional) 보장 로직 
+    // 누락된 단방향 연결을 자동으로 복구합니다.
+    nodes.forEach(node => {
+        node.neighbors.forEach(nId => {
+            const neighbor = nodes.find(n => n.id === nId);
+            if (neighbor && !neighbor.neighbors.includes(node.id)) {
+                neighbor.neighbors.push(node.id);
+            }
+        });
+    });
 
     const traits = ['TECH-CENTRIC', 'RESOURCE-RICH', 'MILITARY POWERHOUSE']
 

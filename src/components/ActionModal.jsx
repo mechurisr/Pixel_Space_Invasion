@@ -2,7 +2,7 @@ import React from 'react'
 import { PixelPanel } from './PixelPanel'
 import { useLanguage } from '../LanguageContext'
 
-export const ActionModal = ({ country, onAction, onClose }) => {
+export const ActionModal = ({ country, onAction, onClose, freeNukes = 0 }) => {
     const { t } = useLanguage()
 
     return (
@@ -41,6 +41,16 @@ export const ActionModal = ({ country, onAction, onClose }) => {
                             >
                                 <span className="text-[10px] text-red-400 font-bold">{t('INITIATE_NUKE')}</span>
                                 <span className="text-[7px] text-slate-400">{t('NUKE_DESC')}</span>
+                            </button>
+                        )}
+
+                        {freeNukes > 0 && (
+                            <button
+                                onClick={() => onAction('FREE_NUKE_LAUNCH')}
+                                className="w-full text-left p-3 border-2 border-purple-500 bg-purple-900/40 hover:bg-purple-800/60 flex flex-col gap-1 transition-colors shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse"
+                            >
+                                <span className="text-[10px] text-purple-300 font-bold">{t('LAUNCH_TACTICAL_NUKE')} ({freeNukes})</span>
+                                <span className="text-[7px] text-purple-200/70">{t('TACTICAL_NUKE_DESC')}</span>
                             </button>
                         )}
 

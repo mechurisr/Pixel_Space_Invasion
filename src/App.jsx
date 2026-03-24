@@ -46,6 +46,8 @@ function App() {
   const [aiData, setAiData] = useState(initialSave?.aiData || []) // Array of { factionId, territoryIds: [] }
   const [actedRegions, setActedRegions] = useState(initialSave?.actedRegions || [])
   const [turn, setTurn] = useState(initialSave?.turn || 1)
+  const [freeNukes, setFreeNukes] = useState(initialSave?.freeNukes || 0)
+  const [turnsSinceLastSupply, setTurnsSinceLastSupply] = useState(initialSave?.turnsSinceLastSupply || 0)
   const [events, setEvents] = useState(() => {
     return initialSave?.events || [{ timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }]
   })
@@ -54,6 +56,7 @@ function App() {
   const [invasionTargetMode, setInvasionTargetMode] = useState(false)
   const [transferTargetMode, setTransferTargetMode] = useState(false)
   const [nukeTargetMode, setNukeTargetMode] = useState(false)
+  const [showManual, setShowManual] = useState(false)
 
   // Win/Loss Condition Check
   React.useEffect(() => {
@@ -78,7 +81,9 @@ function App() {
         aiData,
         actedRegions,
         turn,
-        events
+        events,
+        freeNukes,
+        turnsSinceLastSupply
       }
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveData))
     } else if (gameState === 'GAME_OVER_VICTORY' || gameState === 'GAME_OVER_DEFEAT') {
@@ -93,6 +98,8 @@ function App() {
     setAiData([])
     setActedRegions([])
     setTurn(1)
+    setFreeNukes(0)
+    setTurnsSinceLastSupply(0)
     setEvents([{ timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), type: 'info', message: t('SYSTEM_INITIALIZED') }])
     setSelectedCountryId(null)
     setInvasionTargetMode(false)
@@ -258,6 +265,13 @@ function App() {
         setNukeTargetMode(selectedCountry.id)
         addEvent(t('NUKE_PREP'), 'alert')
       }
+      else if (actionType === 'FREE_NUKE_LAUNCH') {
+        if (freeNukes > 0) {
+          setFreeNukes(prev => prev - 1)
+          setNukeTargetMode(selectedCountry.id)
+          addEvent(t('NUKE_PREP'), 'alert')
+        }
+      }
   }
 
   const handlePlayerInvasion = (target) => {
@@ -292,16 +306,30 @@ function App() {
       const targetMilitary = Math.floor(totalAvailable / 3);
       const sourceMilitary = totalAvailable - targetMilitary; // Remainder goes to source (approx 2/3)
 
+      if (target.hasSupply) {
+        setFreeNukes(prev => prev + 1);
+        addEvent(t('SUPPLY_RECOVERED'), 'alert');
+      }
+
+      let bonusOil = 10;
+      let bonusTech = 10;
+      if (target.mutationUnit === 'MUTANT_HIVE') {
+        setFreeNukes(prev => prev + 1);
+        addEvent(t('MUTANT_HIVE_DESTROYED'), 'alert');
+        bonusOil = 50;
+        bonusTech = 50;
+      }
+
       setTerritories(prev => prev.map(t => {
         if (t.id === target.id) {
-          return { ...t, military: Math.min(100, targetMilitary), isOccupied: false, mutationUnit: null };
+          return { ...t, military: Math.min(100, targetMilitary), isOccupied: false, mutationUnit: null, hasSupply: false, mutationCountdown: null };
         }
         if (t.id === pCountry.id) {
           return {
             ...t,
             military: Math.min(100, sourceMilitary),
-            oil: Math.min(100, t.oil + 10),
-            tech: Math.min(100, t.tech + 10)
+            oil: Math.min(100, t.oil + bonusOil),
+            tech: Math.min(100, t.tech + bonusTech)
           };
         }
         return t;
@@ -549,7 +577,35 @@ function App() {
       const aIndex = newTerritories.findIndex(terr => terr.id === aTerritory.id)
       let terr = newTerritories[aIndex]
 
-      if (terr.mutationUnit === 'GIANT RESOURCE HARVESTER') {
+      if (terr.mutationUnit === 'MUTANT_HIVE') {
+        if (terr.mutationCountdown > 0) {
+          newTerritories[aIndex].mutationCountdown = terr.mutationCountdown - 1;
+          if (newTerritories[aIndex].mutationCountdown === 0) {
+            updateLogs.push(t('MUTANT_HIVE_ERUPTION', { name: t(terr.name) }));
+            terr.neighbors.forEach(nId => {
+              const nIdx = newTerritories.findIndex(nt => nt.id === nId);
+              if (nIdx !== -1 && !newTerritories[nIdx].isOccupied) {
+                newTerritories[nIdx] = {
+                  ...newTerritories[nIdx],
+                  isOccupied: true,
+                  mutationUnit: null,
+                  military: 50,
+                  oil: 0,
+                  tech: 0
+                };
+                newPlayerIds = newPlayerIds.filter(id => id !== nId);
+                newAiData.forEach(otherAi => {
+                  otherAi.territoryIds = otherAi.territoryIds.filter(id => id !== nId);
+                });
+              }
+            });
+            newTerritories[aIndex].mutationUnit = 'HEAVILY ARMORED MECHA ALIEN';
+            newTerritories[aIndex].mutationCountdown = null;
+          } else {
+            updateLogs.push(t('MUTANT_HIVE_TICK', { name: t(terr.name), count: newTerritories[aIndex].mutationCountdown }));
+          }
+        }
+      } else if (terr.mutationUnit === 'GIANT RESOURCE HARVESTER') {
         // Harvest 10 oil (Reduced from 20)
         newTerritories[aIndex].oil = Math.min(100, terr.oil + 10)
         // Spawn troops if oil >= 80
@@ -675,6 +731,64 @@ function App() {
       }
     }
 
+    // Mutant Hive Event (Guaranteed on Turn 15, then 5% chance)
+    const hasMutantHive = newTerritories.some(t => t.mutationUnit === 'MUTANT_HIVE');
+    if (!hasMutantHive && nextTurn >= 15) {
+      const shouldSpawnHive = (nextTurn === 15) || (Math.random() < 0.05);
+      if (shouldSpawnHive) {
+        const alienNodes = newTerritories.filter(n => n.isOccupied && n.mutationUnit !== 'MUTANT_HIVE');
+        if (alienNodes.length > 0) {
+          const target = alienNodes[Math.floor(Math.random() * alienNodes.length)];
+          const tIdx = newTerritories.findIndex(n => n.id === target.id);
+          newTerritories[tIdx].mutationUnit = 'MUTANT_HIVE';
+          newTerritories[tIdx].mutationCountdown = 3;
+          newTerritories[tIdx].military = Math.min(100, newTerritories[tIdx].military + 50);
+          updateLogs.push(t('MUTANT_HIVE_SPAWNED', { name: t(target.name) }));
+        }
+      }
+    }
+
+    // Supply Drop Event (15% chance, or guaranteed at 10 turns)
+    const shouldDropSupply = Math.random() < 0.15 || turnsSinceLastSupply >= 9;
+
+    if (shouldDropSupply) {
+      // Find nodes up to 2 hops away from player
+      let reachableIds = new Set();
+      newPlayerIds.forEach(pId => {
+        const pNode = newTerritories.find(n => n.id === pId);
+        if (pNode) {
+          pNode.neighbors.forEach(nId => {
+            reachableIds.add(nId);
+            const nNode = newTerritories.find(n => n.id === nId);
+            if (nNode) nNode.neighbors.forEach(nnId => reachableIds.add(nnId));
+          });
+        }
+      });
+
+      let supplyTargets = newTerritories.filter(node => 
+        !newPlayerIds.includes(node.id) && 
+        !node.hasSupply && 
+        reachableIds.has(node.id)
+      );
+
+      // Fallback to any valid node if nothing within 2 hops
+      if (supplyTargets.length === 0) {
+        supplyTargets = newTerritories.filter(node => !newPlayerIds.includes(node.id) && !node.hasSupply);
+      }
+
+      if (supplyTargets.length > 0) {
+        const target = supplyTargets[Math.floor(Math.random() * supplyTargets.length)];
+        const tIdx = newTerritories.findIndex(node => node.id === target.id);
+        newTerritories[tIdx].hasSupply = true;
+        updateLogs.push(t('SUPPLY_DROP_DETECTED', { name: t(target.name) }));
+        setTurnsSinceLastSupply(0);
+      } else {
+        setTurnsSinceLastSupply(t => t + 1);
+      }
+    } else {
+      setTurnsSinceLastSupply(t => t + 1);
+    }
+
     setPlayerIds(newPlayerIds)
     setAiData(newAiData)
     setTerritories(newTerritories)
@@ -687,6 +801,10 @@ function App() {
     <div className="h-screen w-full bg-pixel-bg p-4 flex flex-col gap-4 font-pixel select-none relative">
       {gameState === 'INTRO' && (
         <GameIntroModal onStart={() => setGameState('SELECT_START')} />
+      )}
+
+      {showManual && gameState !== 'INTRO' && (
+        <GameIntroModal onStart={() => setShowManual(false)} isManual={true} />
       )}
       
       {gameState === 'GAME_OVER_VICTORY' && (
@@ -702,6 +820,7 @@ function App() {
           country={selectedCountry}
           onAction={handlePlayerAction}
           onClose={() => setShowActionModal(false)}
+          freeNukes={freeNukes}
         />
       )}
 
@@ -710,13 +829,29 @@ function App() {
         <div className="flex flex-col">
           <div className="flex items-baseline gap-2 md:gap-3">
             <h1 className="text-xl md:text-2xl text-white tracking-widest leading-none">{t('GAME_TITLE')}</h1>
-            <span className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-wider">Powered by Reality Is Overrated</span>
+            <span className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-wider">Provided by Reality Is Overrated</span>
           </div>
           <span className="text-[10px] text-blue-400 mt-1">
             {gameState === 'SELECT_START' ? t('INITIALIZATION_STATUS') : t('TURN_STATUS', { turn })}
           </span>
         </div>
         <div className="flex gap-4 items-center">
+          {freeNukes > 0 && (
+            <div className="hidden md:flex items-center text-[10px] text-yellow-400 font-bold border-2 border-yellow-500 bg-yellow-900/40 px-3 py-1 shadow-[0_0_10px_rgba(250,204,21,0.5)] animate-pulse">
+              ⚠ TACTICAL NUKE READY ({freeNukes})
+            </div>
+          )}
+
+          {/* Manual Button */}
+          {gameState !== 'INTRO' && (
+            <button
+              onClick={() => setShowManual(true)}
+              className="bg-green-700 hover:bg-green-600 border-2 border-pixel-border shadow-pixel px-3 py-1 text-[10px] text-white active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
+            >
+              {t('MANUAL_BTN')}
+            </button>
+          )}
+
           {/* Language Switcher */}
           <button
             onClick={toggleLanguage}

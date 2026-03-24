@@ -34,6 +34,7 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
         if (unit === 'HEAVILY ARMORED MECHA ALIEN') return t('HEAVILY_ARMORED_MECHA_ALIEN')
         if (unit === 'PSIONIC ALIEN SPECIALIST') return t('PSIONIC_ALIEN_SPECIALIST')
         if (unit === 'GIANT RESOURCE HARVESTER') return t('GIANT_RESOURCE_HARVESTER')
+        if (unit === 'MUTANT_HIVE') return t('MUTANT_HIVE')
         return unit
     }
 
@@ -54,9 +55,12 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                 </div>
 
                 {country.isOccupied && (
-                    <div className="p-3 bg-purple-900/30 border-2 border-purple-600 animate-pulse">
-                        <p className="text-[8px] text-purple-400 font-bold mb-2">{t('MUTATION_DETECTED')}</p>
-                        <p className="text-[10px] text-white leading-tight">{getMutationLabel(country.mutationUnit)}</p>
+                    <div className={`p-3 bg-purple-900/30 border-2 ${country.mutationUnit === 'MUTANT_HIVE' ? 'border-red-600 bg-red-950/40 animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.3)]' : 'border-purple-600 animate-pulse'}`}>
+                        <p className={`text-[8px] font-bold mb-2 ${country.mutationUnit === 'MUTANT_HIVE' ? 'text-red-400' : 'text-purple-400'}`}>{t('MUTATION_DETECTED')}</p>
+                        <p className={`text-[10px] leading-tight ${country.mutationUnit === 'MUTANT_HIVE' ? 'text-red-200' : 'text-white'}`}>
+                            {getMutationLabel(country.mutationUnit)}
+                            {country.mutationUnit === 'MUTANT_HIVE' && ` - [${country.mutationCountdown}]`}
+                        </p>
                     </div>
                 )}
 

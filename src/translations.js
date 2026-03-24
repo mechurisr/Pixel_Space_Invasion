@@ -45,7 +45,12 @@ export const translations = {
         INTRO_TURN_RULES: "TURN MECHANICS",
         INTRO_TURN_DESC_1: "Execute 1 Protocol per node each turn (Blue '!' indicates readiness).",
         INTRO_TURN_DESC_2: "Press NEXT TURN when finished to advance the global timeline.",
+        INTRO_EVENTS_TITLE: "GLOBAL EVENTS & ANOMALIES",
+        INTRO_EVENT_SUPPLY: "TACTICAL SUPPLY DROP: Appears locally as a bouncing yellow crate. Provides a free tactical nuclear strike upon recovery.",
+        INTRO_EVENT_MUTANT: "MUTANT HIVE ERUPTION: Appears as a massive red pulsing colony. Destroy it before the countdown finishes, or it will rapidly infect all neighboring regions.",
         START_GAME: "INITIALIZE UPLINK",
+        MANUAL_BTN: "MANUAL",
+        CLOSE_MANUAL: "CLOSE MANUAL",
 
         VICTORY_TITLE: "VICTORY ACHIEVED",
         VICTORY_DESC: "Global domination secured. All hostile threats have been neutralized.",
@@ -74,6 +79,7 @@ export const translations = {
         HEAVILY_ARMORED_MECHA_ALIEN: "HEAVILY ARMORED MECHA ALIEN",
         PSIONIC_ALIEN_SPECIALIST: "PSIONIC ALIEN SPECIALIST",
         GIANT_RESOURCE_HARVESTER: "GIANT RESOURCE HARVESTER",
+        MUTANT_HIVE: "MUTANT HIVE (BOSS)",
 
         // Action Modal
         PROTOCOL_TITLE: "EXECUTE PROTOCOL: {name}",
@@ -125,6 +131,14 @@ export const translations = {
         AI_SECURED: "[{name}] SECURED {target}.",
         AI_REDEPLOYED: "[{name}] REDEPLOYED TROOPS TO {target}.",
         AI_NUKE: "[STRATEGIC STRIKE] {name} LAUNCHED A NUKE AT {target}.",
+        SUPPLY_DROP_DETECTED: "[ALERT] Supply crate dropped at {name}.",
+        SUPPLY_RECOVERED: "[SUCCESS] Supply crate recovered! 1 Tactical Nuke added.",
+        LAUNCH_TACTICAL_NUKE: "☣ LAUNCH TACTICAL NUKE",
+        TACTICAL_NUKE_DESC: "Uses 1 Supply Nuke. No resource cost.",
+        MUTANT_HIVE_SPAWNED: "[CRITICAL WARNING] MUTANT HIVE SPAWNED AT {name}! ERUPTION IN 3 TURNS.",
+        MUTANT_HIVE_TICK: "[WARNING] MUTANT HIVE AT {name} ERUPTS IN {count} TURNS.",
+        MUTANT_HIVE_ERUPTION: "[CATASTROPHE] MUTANT HIVE AT {name} ERUPTED! ALL NEIGHBORS INFECTED.",
+        MUTANT_HIVE_DESTROYED: "[HEROIC SUCCESS] MUTANT HIVE NEUTRALIZED! REWARDS SECURED.",
 
         // Regions
         Vancouver: "Vancouver",
@@ -234,7 +248,12 @@ export const translations = {
         INTRO_TURN_RULES: "턴 흐름",
         INTRO_TURN_DESC_1: "구역 당 한 턴에 1개의 프로토콜만 실행할 수 있습니다 (파란색 '!' 표시 구간).",
         INTRO_TURN_DESC_2: "모든 명령을 내린 후 NEXT TURN(다음 턴)을 눌러 시간을 진행하세요.",
+        INTRO_EVENTS_TITLE: "전역 이벤트 및 이상 현상",
+        INTRO_EVENT_SUPPLY: "전술 보급품 투하: 맵 상에 통통 튀는 노란색 상자로 나타납니다. 지역 점령 시 전술 핵 1발을 즉시 제공합니다.",
+        INTRO_EVENT_MUTANT: "돌연변이 둥지 폭발: 거대한 붉은색 펄스를 뿜어냅니다. 카운트다운이 끝나기 전에 파괴하지 않으면 주변 모든 지역을 강제 감염시킵니다.",
         START_GAME: "연결 초기화 (시작)",
+        MANUAL_BTN: "메뉴얼",
+        CLOSE_MANUAL: "메뉴얼 닫기",
 
         VICTORY_TITLE: "승리",
         VICTORY_DESC: "모든 구역을 장악하고 전 지구적 위협을 제거했습니다.",
@@ -263,6 +282,7 @@ export const translations = {
         HEAVILY_ARMORED_MECHA_ALIEN: "중장갑 메카 외계인",
         PSIONIC_ALIEN_SPECIALIST: "사이오닉 외계인 전문가",
         GIANT_RESOURCE_HARVESTER: "거대 자원 채집기",
+        MUTANT_HIVE: "돌연변이 둥지 (보스)",
 
         // Action Modal
         PROTOCOL_TITLE: "프로토콜 실행: {name}",
@@ -314,6 +334,14 @@ export const translations = {
         AI_SECURED: "[{name}] {target} 확보.",
         AI_REDEPLOYED: "[{name}] {target}(으)로 병력 재배치.",
         AI_NUKE: "[전략 타격] {name}이(가) {target}에 핵을 발사했습니다.",
+        SUPPLY_DROP_DETECTED: "[알림] {name} 지역에 정체불명의 보급품이 투하되었습니다.",
+        SUPPLY_RECOVERED: "[성공] 보급품을 회수했습니다! 전술 핵 1발 추가.",
+        LAUNCH_TACTICAL_NUKE: "☣ 전술 핵 발사",
+        TACTICAL_NUKE_DESC: "보급형 전술 핵 1발 소비. 자원 비용 없음.",
+        MUTANT_HIVE_SPAWNED: "[심각한 경고] {name}에 돌연변이 둥지가 출현했습니다! 3턴 뒤 폭발합니다.",
+        MUTANT_HIVE_TICK: "[경고] {name}의 돌연변이 둥지 폭발까지 {count}턴 남았습니다.",
+        MUTANT_HIVE_ERUPTION: "[대재앙] {name}의 둥지가 폭발했습니다! 주변 모든 지역이 감염되었습니다.",
+        MUTANT_HIVE_DESTROYED: "[영웅적 승리] 돌연변이 둥지를 성공적으로 점령했습니다! 막대한 보상을 획득합니다.",
 
         // Regions
         Vancouver: "밴쿠버",

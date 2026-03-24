@@ -49,6 +49,10 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                     if (node.isOccupied) {
                         nodeClass = 'bg-purple-950/90 border-purple-800 text-purple-400 animate-pulse'
                         textClass = 'text-purple-300'
+                        if (node.mutationUnit === 'MUTANT_HIVE') {
+                            nodeClass = 'bg-red-950/90 border-red-600 text-red-500 animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.8)] z-20 ring-4 ring-red-500/50'
+                            textClass = 'text-red-200'
+                        }
                     }
                     else if (isPlayer) {
                         nodeClass = 'bg-green-600/80 border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)]'
@@ -66,7 +70,7 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                     } else if (isTransferTargetable) {
                         nodeClass += ' ring-4 ring-green-400 ring-offset-2 ring-offset-black animate-pulse cursor-pointer z-20'
                     } else if (isNukeTarget) {
-                        nodeClass += ' ring-[6px] ring-red-600 ring-offset-4 ring-offset-black animate-[ping_1s_infinite] cursor-crosshair z-30'
+                        nodeClass += ' ring-[6px] ring-red-600 ring-offset-4 ring-offset-black animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.8)] cursor-crosshair z-30'
                     } else if (isSelected) {
                         nodeClass += ' ring-2 ring-blue-400'
                     }
@@ -84,10 +88,13 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                         >
                             {label}
                             <span className={`text-[5px] md:text-[6px] font-bold ${textClass} transition-colors text-center leading-none px-1`}>
-                                {node.isOccupied ? '☣' : node.code}
+                                {node.isOccupied ? (node.mutationUnit === 'MUTANT_HIVE' ? `☣ ${node.mutationCountdown}` : '☣') : node.code}
                             </span>
                             {node.hasEvent && !node.isOccupied && (
                                 <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 animate-ping rounded-full -mt-1 -mr-1"></div>
+                            )}
+                            {node.hasSupply && !node.isOccupied && (
+                                <div className="absolute top-0 right-0 w-3 h-3 bg-yellow-400 animate-bounce shadow-[0_0_10px_rgba(250,204,21,0.8)] border border-yellow-200 z-30 -mt-1 -mr-1" title="Supply Drop"></div>
                             )}
                             {canAct && (
                                 <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-blue-500 rounded-sm border-[1px] border-blue-200 flex items-center justify-center shadow-[0_0_5px_rgba(59,130,246,0.8)] z-20">

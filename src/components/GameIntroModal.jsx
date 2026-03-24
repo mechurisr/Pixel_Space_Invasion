@@ -38,7 +38,7 @@ const AiIcon = () => (
     </svg>
 )
 
-export const GameIntroModal = ({ onStart }) => {
+export const GameIntroModal = ({ onStart, isManual = false }) => {
     const { t, lang, toggleLanguage } = useLanguage()
 
     return (
@@ -169,6 +169,30 @@ export const GameIntroModal = ({ onStart }) => {
                             </div>
                         </div>
 
+                        {/* Events Section */}
+                        <div className="bg-slate-900/50 p-4 border border-slate-700">
+                            <h3 className="text-xs text-yellow-500 mb-4">{t('INTRO_EVENTS_TITLE')}</h3>
+                            <div className="space-y-4">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-10 h-10 shrink-0 bg-slate-800 border-2 border-slate-600 flex items-center justify-center relative">
+                                        <span className="text-[6px] text-slate-300">BAS</span>
+                                        <div className="absolute top-0 right-0 w-3 h-3 bg-yellow-400 animate-bounce shadow-[0_0_10px_rgba(250,204,21,0.8)] border border-yellow-200 -mt-1 -mr-1"></div>
+                                    </div>
+                                    <p className="text-[10px] text-yellow-200/80 leading-relaxed pt-1">
+                                        {t('INTRO_EVENT_SUPPLY')}
+                                    </p>
+                                </div>
+                                <div className="flex items-start gap-4 pt-2">
+                                    <div className="w-10 h-10 shrink-0 bg-red-950/90 border-2 border-red-600 flex items-center justify-center shadow-[0_0_15px_rgba(220,38,38,0.8)] animate-pulse ring-4 ring-red-500/50">
+                                        <span className="text-[8px] font-bold text-red-200">☣ 3</span>
+                                    </div>
+                                    <p className="text-[10px] text-red-300 leading-relaxed pt-1">
+                                        {t('INTRO_EVENT_MUTANT')}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
                         {/* Start Button & Lang Toggle */}
                         <div className="pt-4 flex flex-col items-center gap-4">
                             <button
@@ -177,7 +201,7 @@ export const GameIntroModal = ({ onStart }) => {
                             >
                                 {/* Glitch/Scanline effect on hover */}
                                 <div className="absolute inset-0 bg-white/20 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-500"></div>
-                                {t('START_GAME')}
+                                {isManual ? t('CLOSE_MANUAL') : t('START_GAME')}
                             </button>
                             
                             <button
