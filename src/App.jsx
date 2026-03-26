@@ -722,7 +722,14 @@ function App() {
         if (potentialHumanTargets.length > 0) {
           const target = potentialHumanTargets[0]
           const tIdx = newTerritories.findIndex(x => x.id === target.id)
-          newTerritories[tIdx] = { ...newTerritories[tIdx], isOccupied: true, mutationUnit: terr.mutationUnit, military: 50, oil: 0, tech: 0 }
+          
+          let targetMutation = terr.mutationUnit;
+          if (targetMutation === 'MUTANT_HIVE') {
+            const standardMutations = ['HEAVILY ARMORED MECHA ALIEN', 'PSIONIC ALIEN SPECIALIST', 'GIANT RESOURCE HARVESTER'];
+            targetMutation = standardMutations[Math.floor(Math.random() * standardMutations.length)];
+          }
+
+          newTerritories[tIdx] = { ...newTerritories[tIdx], isOccupied: true, mutationUnit: targetMutation, military: 50, oil: 0, tech: 0 }
 
           // Sync owner cleanup
           newPlayerIds = newPlayerIds.filter(id => id !== target.id)
@@ -767,7 +774,13 @@ function App() {
           const leftoverAttacker = Math.max(0, newTerritories[aIndex].military - Math.floor(nForce / 2))
           newTerritories[targetIndex].military = 20 + Math.floor(leftoverAttacker * 0.1)
           newTerritories[targetIndex].isOccupied = true
-          newTerritories[targetIndex].mutationUnit = terr.mutationUnit // Clone itself
+          
+          let targetMutation = terr.mutationUnit;
+          if (targetMutation === 'MUTANT_HIVE') {
+            const standardMutations = ['HEAVILY ARMORED MECHA ALIEN', 'PSIONIC ALIEN SPECIALIST', 'GIANT RESOURCE HARVESTER'];
+            targetMutation = standardMutations[Math.floor(Math.random() * standardMutations.length)];
+          }
+          newTerritories[targetIndex].mutationUnit = targetMutation; // Prevent Hive cloning
 
           // HIVE EXHAUSTION: The attacking hive pushes itself to the limit and loses 50% of its remaining force
           newTerritories[aIndex].military = Math.floor(leftoverAttacker * 0.5)
