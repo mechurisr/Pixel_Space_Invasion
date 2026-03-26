@@ -298,7 +298,6 @@ function App() {
       }
       else if (actionType === 'FREE_NUKE_LAUNCH') {
         if (freeNukes > 0) {
-          setFreeNukes(prev => prev - 1)
           setNukeTargetMode(selectedCountry.id)
           addEvent(t('NUKE_PREP'), 'alert')
         }
@@ -425,6 +424,12 @@ function App() {
   const handleNukeLaunch = (target) => {
     const sourceId = nukeTargetMode
     setNukeTargetMode(false)
+
+    // Deduct free nuke if the source node didn't have a built nuke ready
+    const sourceNode = territories.find(t => t.id === sourceId);
+    if (sourceNode && sourceNode.nukeStatus !== 'READY') {
+      setFreeNukes(prev => prev - 1);
+    }
 
     // Reset target to 0 Neutral
     setTerritories(prev => prev.map(terr => {
@@ -851,8 +856,8 @@ function App() {
       }
     }
 
-    // Supply Drop Event (15% chance, or guaranteed at 10 turns)
-    const shouldDropSupply = Math.random() < 0.15 || turnsSinceLastSupply >= 9;
+    // Supply Drop Event (20% chance, or guaranteed at 10 turns)
+    const shouldDropSupply = Math.random() < 0.20 || turnsSinceLastSupply >= 9;
 
     if (shouldDropSupply) {
       // Find nodes up to 2 hops away from player

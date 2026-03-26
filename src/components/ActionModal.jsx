@@ -34,7 +34,7 @@ export const ActionModal = ({ country, onAction, onClose, freeNukes = 0 }) => {
                             <span className="text-[7px] text-slate-400">{t('TRANSFER_DESC')}</span>
                         </button>
 
-                        {country.military >= 100 && country.tech >= 100 && !country.nukeStatus && (
+                        {country.military >= 70 && country.tech >= 70 && !country.nukeStatus && (
                             <button
                                 onClick={() => onAction('NUKE_DEV')}
                                 className="w-full text-left p-3 border-2 border-red-600 bg-red-950/40 hover:bg-red-900/60 flex flex-col gap-1 transition-colors animate-pulse"

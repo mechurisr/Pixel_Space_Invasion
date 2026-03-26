@@ -101,7 +101,7 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                             {node.hasEvent && !node.isOccupied && (
                                 <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 animate-ping rounded-full -mt-1 -mr-1"></div>
                             )}
-                            {node.hasSupply && !node.isOccupied && (
+                            {node.hasSupply && (
                                 <div className="absolute top-0 right-0 w-3 h-3 bg-yellow-400 animate-bounce shadow-[0_0_10px_rgba(250,204,21,0.8)] border border-yellow-200 z-30 -mt-1 -mr-1" title="Supply Drop"></div>
                             )}
                             {canAct && (
