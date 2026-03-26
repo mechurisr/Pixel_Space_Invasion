@@ -47,6 +47,9 @@ function App() {
   const [actedRegions, setActedRegions] = useState(initialSave?.actedRegions || [])
   const [turn, setTurn] = useState(initialSave?.turn || 1)
   const [freeNukes, setFreeNukes] = useState(initialSave?.freeNukes || 0)
+  const [supplies, setSupplies] = useState(initialSave?.supplies || 0)
+  const [solarFlareZones, setSolarFlareZones] = useState(initialSave?.solarFlareZones || [])
+  const [solarFlareDuration, setSolarFlareDuration] = useState(initialSave?.solarFlareDuration || 0)
   const [turnsSinceLastSupply, setTurnsSinceLastSupply] = useState(initialSave?.turnsSinceLastSupply || 0)
   const [events, setEvents] = useState(() => {
     return initialSave?.events || [{ timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }]
@@ -56,6 +59,7 @@ function App() {
   const [invasionTargetMode, setInvasionTargetMode] = useState(false)
   const [transferTargetMode, setTransferTargetMode] = useState(false)
   const [nukeTargetMode, setNukeTargetMode] = useState(false)
+  const [specialForcesTargetMode, setSpecialForcesTargetMode] = useState(false)
   const [showManual, setShowManual] = useState(false)
 
   // Win/Loss Condition Check
@@ -83,6 +87,9 @@ function App() {
         turn,
         events,
         freeNukes,
+        supplies,
+        solarFlareZones,
+        solarFlareDuration,
         turnsSinceLastSupply
       }
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveData))
@@ -99,12 +106,16 @@ function App() {
     setActedRegions([])
     setTurn(1)
     setFreeNukes(0)
+    setSupplies(0)
+    setSolarFlareZones([])
+    setSolarFlareDuration(0)
     setTurnsSinceLastSupply(0)
     setEvents([{ timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), type: 'info', message: t('SYSTEM_INITIALIZED') }])
     setSelectedCountryId(null)
     setInvasionTargetMode(false)
     setTransferTargetMode(false)
     setNukeTargetMode(false)
+    setSpecialForcesTargetMode(false)
     setShowActionModal(false)
     setGameState('INTRO')
   }
@@ -206,6 +217,25 @@ function App() {
       return
     }
 
+    if (specialForcesTargetMode) {
+      if (playerIds.includes(country.id)) {
+        addEvent(t('TARGET_MUST_BE_ENEMY'), 'alert')
+        return
+      }
+      if (supplies < 15) {
+        addEvent(t('INSUFFICIENT_SUPPLIES'), 'alert')
+        setSpecialForcesTargetMode(false)
+        return
+      }
+      setSupplies(prev => prev - 15)
+      setTerritories(prev => prev.map(t => 
+        t.id === country.id ? { ...t, military: Math.floor(t.military / 2) } : t
+      ))
+      setSpecialForcesTargetMode(false)
+      addEvent(t('SPECIAL_FORCES_SUCCESS', { name: t(country.name) }), 'alert')
+      return
+    }
+
     setSelectedCountryId(country.id)
   }
 
@@ -215,6 +245,7 @@ function App() {
       if (invasionTargetMode === selectedCountry?.id) { setInvasionTargetMode(false); setShowActionModal(true); return; }
       if (transferTargetMode === selectedCountry?.id) { setTransferTargetMode(false); setShowActionModal(true); return; }
       if (nukeTargetMode === selectedCountry?.id) { setNukeTargetMode(false); setShowActionModal(true); return; }
+      if (specialForcesTargetMode) { setSpecialForcesTargetMode(false); return; }
 
       if (actionType && typeof actionType === 'string') {
         handlePlayerAction(actionType)
@@ -306,8 +337,10 @@ function App() {
       const targetMilitary = Math.floor(totalAvailable / 3);
       const sourceMilitary = totalAvailable - targetMilitary; // Remainder goes to source (approx 2/3)
 
+      setSupplies(prev => prev + 1); // Reward for capturing region
+
       if (target.hasSupply) {
-        setFreeNukes(prev => prev + 1);
+        setSupplies(prev => prev + 15);
         addEvent(t('SUPPLY_RECOVERED'), 'alert');
       }
 
@@ -419,6 +452,63 @@ function App() {
     })
 
     addEvent(t('NUCLEAR_NEUTRALIZED', { name: t(target.name) }), 'alert')
+  }
+
+  const handleBuyItem = (itemType) => {
+    if (!selectedCountry) return;
+    
+    // Nuke doesn't strictly need a player-owned region selected to buy, but to be consistent or just allow it:
+    if (itemType === 'NUKE') {
+      if (supplies >= 30) {
+        setSupplies(prev => prev - 30)
+        setFreeNukes(prev => prev + 1)
+        addEvent(t('ITEM_BOUGHT_NUKE'), 'info')
+      } else {
+        addEvent(t('INSUFFICIENT_SUPPLIES'), 'alert')
+      }
+      return;
+    }
+
+    if (itemType === 'SPECIAL_FORCES') {
+      if (supplies >= 15) {
+        setSpecialForcesTargetMode(true)
+        addEvent(t('SPECIAL_FORCES_PREP'), 'info')
+      } else {
+        addEvent(t('INSUFFICIENT_SUPPLIES'), 'alert')
+      }
+      return;
+    }
+
+    if (!playerIds.includes(selectedCountry.id) || selectedCountry.isOccupied) {
+      addEvent(t('MUST_SELECT_OWNED_REGION'), 'alert')
+      return;
+    }
+
+    if (itemType === 'MILITARY') {
+      if (supplies >= 10) {
+        setSupplies(prev => prev - 10)
+        setTerritories(prev => prev.map(t => 
+          t.id === selectedCountry.id 
+            ? { ...t, military: Math.min(100, t.military + 30) } 
+            : t
+        ))
+        addEvent(t('ITEM_BOUGHT_MILITARY', { name: t(selectedCountry.name) }), 'info')
+      } else {
+        addEvent(t('INSUFFICIENT_SUPPLIES'), 'alert')
+      }
+    } else if (itemType === 'RESOURCE') {
+      if (supplies >= 10) {
+        setSupplies(prev => prev - 10)
+        setTerritories(prev => prev.map(t => 
+          t.id === selectedCountry.id 
+            ? { ...t, oil: Math.min(100, t.oil + 30), tech: Math.min(100, t.tech + 30) } 
+            : t
+        ))
+        addEvent(t('ITEM_BOUGHT_RESOURCE', { name: t(selectedCountry.name) }), 'info')
+      } else {
+        addEvent(t('INSUFFICIENT_SUPPLIES'), 'alert')
+      }
+    }
   }
 
   const handleNextTurn = () => {
@@ -731,10 +821,10 @@ function App() {
       }
     }
 
-    // Mutant Hive Event (Guaranteed on Turn 15, then 5% chance)
-    const hasMutantHive = newTerritories.some(t => t.mutationUnit === 'MUTANT_HIVE');
-    if (!hasMutantHive && nextTurn >= 15) {
-      const shouldSpawnHive = (nextTurn === 15) || (Math.random() < 0.05);
+    // Mutant Hive Event (Guaranteed on Turn 15, then 15% chance, max 3 hives globally)
+    const mutantHiveCount = newTerritories.filter(t => t.mutationUnit === 'MUTANT_HIVE').length;
+    if (mutantHiveCount < 3 && nextTurn >= 15) {
+      const shouldSpawnHive = (nextTurn === 15) || (Math.random() < 0.15);
       if (shouldSpawnHive) {
         const alienNodes = newTerritories.filter(n => n.isOccupied && n.mutationUnit !== 'MUTANT_HIVE');
         if (alienNodes.length > 0) {
@@ -788,6 +878,37 @@ function App() {
     } else {
       setTurnsSinceLastSupply(t => t + 1);
     }
+
+    // Solar Flare Event (10% chance after turn 10)
+    let sfZones = [...solarFlareZones];
+    let sfDuration = solarFlareDuration;
+
+    if (sfDuration > 0) {
+      sfDuration -= 1;
+      if (sfDuration === 0) {
+        sfZones = [];
+        updateLogs.push(t('SOLAR_FLARE_ENDED'));
+      }
+    }
+
+    if (sfDuration === 0 && nextTurn >= 10 && Math.random() < 0.10) {
+      // Find frontline regions: player owned, has at least one non-player neighbor
+      const frontlines = newTerritories.filter(t => 
+        newPlayerIds.includes(t.id) && t.neighbors.some(nId => !newPlayerIds.includes(nId))
+      );
+      if (frontlines.length > 0) {
+        const center = frontlines[Math.floor(Math.random() * frontlines.length)];
+        // Pick center + up to 3 random neighbors
+        const neighborCandidates = [...center.neighbors].sort(() => 0.5 - Math.random());
+        const selectedNeighbors = neighborCandidates.slice(0, 3);
+        sfZones = [center.id, ...selectedNeighbors];
+        sfDuration = 2; // Lasts 2 turns
+        updateLogs.push(t('SOLAR_FLARE_STARTED'));
+      }
+    }
+
+    setSolarFlareZones(sfZones);
+    setSolarFlareDuration(sfDuration);
 
     setPlayerIds(newPlayerIds)
     setAiData(newAiData)
@@ -873,7 +994,7 @@ function App() {
           {gameState !== 'SELECT_START' && gameState !== 'INTRO' && (
             <button
               onClick={handleNextTurn}
-              disabled={invasionTargetMode}
+              disabled={invasionTargetMode || specialForcesTargetMode}
               className="bg-red-700 hover:bg-red-600 disabled:bg-slate-700 disabled:text-slate-500 border-2 border-pixel-border shadow-pixel px-4 py-2 text-[10px] text-white active:translate-x-1 active:translate-y-1 active:shadow-none transition-all"
             >
               {t('NEXT_TURN')}
@@ -893,15 +1014,23 @@ function App() {
             hasActed={actedRegions.includes(selectedCountry?.id)}
             onExecuteProtocol={executeProtocolClick}
             gameState={gameState}
-            isTargetingMode={invasionTargetMode || transferTargetMode || nukeTargetMode}
+            isTargetingMode={invasionTargetMode || transferTargetMode || nukeTargetMode || specialForcesTargetMode}
+            supplies={supplies}
+            solarFlareZones={solarFlareZones}
+            onBuyItem={handleBuyItem}
           />
         </div>
 
         {/* Center: Map (80%) */}
-        <div className="w-full md:w-4/5 h-2/3 md:h-full flex items-center justify-center bg-[#050B14] border-4 border-pixel-border p-4 relative overflow-hidden">
+        <div className={`w-full md:w-4/5 h-2/3 md:h-full flex items-center justify-center bg-[#050B14] border-4 border-pixel-border p-4 relative overflow-hidden transition-colors duration-1000 ${solarFlareZones.length > 0 ? 'bg-red-950/20' : ''}`}>
           {/* Subtle grid background for the map container */}
-          <div className="absolute inset-0 opacity-5 pointer-events-none"
-            style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 0)', backgroundSize: '30px 30px' }}></div>
+          <div className={`absolute inset-0 opacity-5 pointer-events-none transition-colors duration-1000 ${solarFlareZones.length > 0 ? 'bg-[radial-gradient(#ef4444_1px,transparent_0)]' : 'bg-[radial-gradient(#fff_1px,transparent_0)]'}`}
+            style={{ backgroundSize: '30px 30px' }}></div>
+
+          {/* Solar Flare Screen Effect */}
+          {solarFlareZones.length > 0 && (
+            <div className="absolute inset-0 pointer-events-none z-50 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] mix-blend-overlay opacity-30 animate-pulse"></div>
+          )}
 
           <div className="w-full h-full max-h-[800px] relative">
             <InteractiveMap
@@ -915,13 +1044,15 @@ function App() {
               transferTargetMode={transferTargetMode}
               nukeTargetMode={nukeTargetMode}
               actedRegions={actedRegions}
+              solarFlareZones={solarFlareZones}
             />
           </div>
 
-          {(invasionTargetMode || transferTargetMode || nukeTargetMode) && (
+          {(invasionTargetMode || transferTargetMode || nukeTargetMode || specialForcesTargetMode) && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/80 border-2 border-blue-500 text-blue-100 text-[10px] px-4 py-2 animate-pulse pointer-events-none z-20">
               {invasionTargetMode ? t('TARGET_HINT_INVASION') :
                 nukeTargetMode ? t('TARGET_HINT_NUKE') :
+                 specialForcesTargetMode ? t('TARGET_HINT_SPECIAL_FORCES') :
                   t('TARGET_HINT_TRANSFER')}
             </div>
           )}

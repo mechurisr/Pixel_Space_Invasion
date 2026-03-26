@@ -33,5 +33,19 @@ body {
   display: flex;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
+}
+
+@keyframes glitch {
+  0% { transform: translate(-50%, -50%) }
+  20% { transform: translate(calc(-50% - 2px), calc(-50% + 2px)) }
+  40% { transform: translate(calc(-50% - 2px), calc(-50% - 2px)) }
+  60% { transform: translate(calc(-50% + 2px), calc(-50% + 2px)) }
+  80% { transform: translate(calc(-50% + 2px), calc(-50% - 2px)) }
+  100% { transform: translate(-50%, -50%) }
+}
+
+.solar-flare-node {
+  animation: glitch 0.3s infinite !important;
+  box-shadow: 0 0 15px 5px rgba(255, 0, 0, 0.7) !important;
+  border-color: #ef4444 !important;
 }

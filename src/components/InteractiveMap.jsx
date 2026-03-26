@@ -1,7 +1,7 @@
 import React from 'react'
 import { useLanguage } from '../LanguageContext'
 
-export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [] }) => {
+export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [], solarFlareZones = [] }) => {
     const { t } = useLanguage()
     return (
         <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border overflow-auto">
@@ -65,6 +65,14 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                         label = <span className={`absolute -top-4 text-[5px] ${aiMeta.colorClass} drop-shadow-md`}>{aiMeta.id}</span>
                     }
 
+                    const isFlareActive = solarFlareZones.includes(node.id);
+                    if (isFlareActive) {
+                        nodeClass += ' solar-flare-node';
+                        if (!isPlayer) {
+                            label = <span className="absolute -top-4 text-[5px] text-red-400 drop-shadow-md">???</span>;
+                        }
+                    }
+
                     if (isTargetable && !isPlayer) {
                         nodeClass += ' ring-4 ring-red-500 ring-offset-2 ring-offset-black animate-pulse cursor-crosshair z-20'
                     } else if (isTransferTargetable) {
@@ -88,7 +96,7 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                         >
                             {label}
                             <span className={`text-[5px] md:text-[6px] font-bold ${textClass} transition-colors text-center leading-none px-1`}>
-                                {node.isOccupied ? (node.mutationUnit === 'MUTANT_HIVE' ? `☣ ${node.mutationCountdown}` : '☣') : node.code}
+                                {(isFlareActive && !isPlayer) ? '???' : (node.isOccupied ? (node.mutationUnit === 'MUTANT_HIVE' ? `☣ ${node.mutationCountdown}` : '☣') : node.code)}
                             </span>
                             {node.hasEvent && !node.isOccupied && (
                                 <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 animate-ping rounded-full -mt-1 -mr-1"></div>

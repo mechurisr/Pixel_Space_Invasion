@@ -3,8 +3,9 @@ import { PixelPanel } from './PixelPanel'
 import { OilIcon, TechIcon, MilitaryIcon } from './Icons'
 import { useLanguage } from '../LanguageContext'
 
-export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecuteProtocol, gameState, isTargetingMode }) => {
+export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecuteProtocol, gameState, isTargetingMode, supplies = 0, onBuyItem, solarFlareZones = [] }) => {
     const { t } = useLanguage()
+    const [isShopOpen, setIsShopOpen] = React.useState(false)
 
     if (!country) return (
         <PixelPanel title={t('COMMAND_CENTER')} className="h-full">
@@ -38,8 +39,11 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
         return unit
     }
 
+    const isFlareActive = solarFlareZones.includes(country.id);
+    const obf = isFlareActive && !isPlayerOwned; // Obfuscate stats if enemy
+
     return (
-        <PixelPanel title={t('SECTOR_ANALYSIS')} className="h-full">
+        <PixelPanel title={isFlareActive ? t('SOLAR_FLARE_WARNING') : t('SECTOR_ANALYSIS')} className={`h-full ${isFlareActive ? 'border-red-600 shadow-[0_0_15px_rgba(220,38,38,0.5)]' : ''}`}>
             <div className="space-y-6">
                 <div>
                     <h2 className={`text-lg mb-1 leading-tight ${country.isOccupied ? 'text-purple-500' : 'text-yellow-400'}`}>
@@ -58,8 +62,8 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                     <div className={`p-3 bg-purple-900/30 border-2 ${country.mutationUnit === 'MUTANT_HIVE' ? 'border-red-600 bg-red-950/40 animate-pulse shadow-[0_0_10px_rgba(220,38,38,0.3)]' : 'border-purple-600 animate-pulse'}`}>
                         <p className={`text-[8px] font-bold mb-2 ${country.mutationUnit === 'MUTANT_HIVE' ? 'text-red-400' : 'text-purple-400'}`}>{t('MUTATION_DETECTED')}</p>
                         <p className={`text-[10px] leading-tight ${country.mutationUnit === 'MUTANT_HIVE' ? 'text-red-200' : 'text-white'}`}>
-                            {getMutationLabel(country.mutationUnit)}
-                            {country.mutationUnit === 'MUTANT_HIVE' && ` - [${country.mutationCountdown}]`}
+                            {obf ? t('UNKNOWN_MUTATION') : getMutationLabel(country.mutationUnit)}
+                            {(!obf && country.mutationUnit === 'MUTANT_HIVE') && ` - [${country.mutationCountdown}]`}
                         </p>
                     </div>
                 )}
@@ -71,12 +75,12 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                             <div className="flex items-center gap-1">
                                 <OilIcon /> <span>{t('CRUDE_OIL')}</span>
                             </div>
-                            <span>{country.oil}%</span>
+                            <span>{obf ? '???' : `${country.oil}%`}</span>
                         </div>
                         <div className="w-full h-3 bg-black/50 border-2 border-pixel-border p-[1px]">
                             <div
-                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'GIANT RESOURCE HARVESTER' ? 'bg-purple-600' : 'bg-yellow-600'}`}
-                                style={{ width: `${country.oil}%` }}
+                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${obf ? 'bg-red-900/50' : (country.isOccupied && country.mutationUnit === 'GIANT RESOURCE HARVESTER' ? 'bg-purple-600' : 'bg-yellow-600')}`}
+                                style={{ width: obf ? '100%' : `${country.oil}%` }}
                             ></div>
                         </div>
                     </div>
@@ -87,12 +91,12 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                             <div className="flex items-center gap-1">
                                 <TechIcon /> <span>{t('TECH_ASSETS')}</span>
                             </div>
-                            <span>{country.tech}%</span>
+                            <span>{obf ? '???' : `${country.tech}%`}</span>
                         </div>
                         <div className="w-full h-3 bg-black/50 border-2 border-pixel-border p-[1px]">
                             <div
-                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'PSIONIC ALIEN SPECIALIST' ? 'bg-purple-600' : 'bg-blue-600'}`}
-                                style={{ width: `${country.tech}%` }}
+                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${obf ? 'bg-red-900/50' : (country.isOccupied && country.mutationUnit === 'PSIONIC ALIEN SPECIALIST' ? 'bg-purple-600' : 'bg-blue-600')}`}
+                                style={{ width: obf ? '100%' : `${country.tech}%` }}
                             ></div>
                         </div>
                     </div>
@@ -103,12 +107,12 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                             <div className="flex items-center gap-1">
                                 <MilitaryIcon /> <span>{t('MILITARY_FORCE')}</span>
                             </div>
-                            <span>{country.military}%</span>
+                            <span>{obf ? '???' : `${country.military}%`}</span>
                         </div>
                         <div className="w-full h-3 bg-black/50 border-2 border-pixel-border p-[1px]">
                             <div
-                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'bg-purple-600' : 'bg-red-600'}`}
-                                style={{ width: `${country.military}%` }}
+                                className={`h-full shadow-[inset_-2px_0_0_rgba(0,0,0,0.3)] transition-all duration-500 ${obf ? 'bg-red-900/50' : (country.isOccupied && country.mutationUnit === 'HEAVILY ARMORED MECHA ALIEN' ? 'bg-purple-600' : 'bg-red-600')}`}
+                                style={{ width: obf ? '100%' : `${country.military}%` }}
                             ></div>
                         </div>
                     </div>
@@ -126,17 +130,76 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
 
                     <button
                         onClick={onExecuteProtocol}
-                        disabled={!isPlayerOwned || country.isOccupied || hasActed}
+                        disabled={!isPlayerOwned || country.isOccupied || hasActed || isFlareActive}
                         className={`w-full border-2 shadow-pixel px-2 py-3 text-[8px] transition-all
-              ${isPlayerOwned && !country.isOccupied && !hasActed
+              ${isPlayerOwned && !country.isOccupied && !hasActed && !isFlareActive
                                 ? isTargetingMode
                                     ? 'bg-red-800 hover:bg-red-700 border-red-400 text-white active:translate-x-1 active:translate-y-1 active:shadow-none'
                                     : 'bg-blue-800 hover:bg-blue-700 border-blue-400 text-white active:translate-x-1 active:translate-y-1 active:shadow-none'
                                 : 'bg-slate-800 border-slate-700 text-slate-600 cursor-not-allowed'}
             `}
                     >
-                        {!isPlayerOwned ? t('RESTRICTED_ACCESS') : hasActed ? t('ACTION_ALREADY_TAKEN') : isTargetingMode ? t('CANCEL_TARGETING') : t('EXECUTE_PROTOCOL')}
+                        {isFlareActive && isPlayerOwned ? t('COMMUNICATION_LOST') : 
+                         !isPlayerOwned ? t('RESTRICTED_ACCESS') : 
+                         hasActed ? t('ACTION_ALREADY_TAKEN') : 
+                         isTargetingMode ? t('CANCEL_TARGETING') : 
+                         t('EXECUTE_PROTOCOL')}
                     </button>
+
+                    {gameState !== 'INTRO' && gameState !== 'SELECT_START' && (
+                        <div className="mt-4 border-t-2 border-pixel-border/20 pt-4">
+                            <button 
+                                onClick={() => setIsShopOpen(!isShopOpen)}
+                                className="w-full flex justify-between items-center mb-2 px-1 hover:bg-white/5 cursor-pointer rounded transition-colors"
+                            >
+                                <span className="text-[10px] text-yellow-400 font-bold tracking-widest flex items-center gap-2">
+                                    {t('SUPPLIES_LABEL')}
+                                    <span className="text-[8px] text-slate-400">{isShopOpen ? '▼' : '▶'}</span>
+                                </span>
+                                <span className="text-sm text-yellow-300 font-mono tracking-wider">{supplies}</span>
+                            </button>
+                            
+                            {isShopOpen && (
+                                <div className="space-y-2 mt-2">
+                                    <button
+                                        onClick={() => onBuyItem('NUKE')}
+                                        disabled={supplies < 30 || isFlareActive}
+                                        className={`w-full flex justify-between items-center p-2 text-[8px] border-2 transition-all ${supplies >= 30 && !isFlareActive ? 'bg-purple-900/40 border-purple-500 hover:bg-purple-800/60 text-purple-200 cursor-pointer shadow-[0_0_8px_rgba(168,85,247,0.3)]' : 'bg-slate-900 border-slate-700 text-slate-600 cursor-not-allowed'}`}
+                                    >
+                                        <span>{t('SHOP_NUKE')}</span>
+                                        <span className="font-bold">30</span>
+                                    </button>
+                                    
+                                    <button
+                                        onClick={() => onBuyItem('MILITARY')}
+                                        disabled={supplies < 10 || (!isPlayerOwned || country.isOccupied) || isFlareActive}
+                                        className={`w-full flex justify-between items-center p-2 text-[8px] border-2 transition-all ${supplies >= 10 && (isPlayerOwned && !country.isOccupied) && !isFlareActive ? 'bg-red-900/40 border-red-500 hover:bg-red-800/60 text-red-200 cursor-pointer' : 'bg-slate-900 border-slate-700 text-slate-600 cursor-not-allowed'}`}
+                                    >
+                                        <span>{t('SHOP_MILITARY')}</span>
+                                        <span className="font-bold">10</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => onBuyItem('RESOURCE')}
+                                        disabled={supplies < 10 || (!isPlayerOwned || country.isOccupied) || isFlareActive}
+                                        className={`w-full flex justify-between items-center p-2 text-[8px] border-2 transition-all ${supplies >= 10 && (isPlayerOwned && !country.isOccupied) && !isFlareActive ? 'bg-blue-900/40 border-blue-500 hover:bg-blue-800/60 text-blue-200 cursor-pointer' : 'bg-slate-900 border-slate-700 text-slate-600 cursor-not-allowed'}`}
+                                    >
+                                        <span>{t('SHOP_RESOURCE')}</span>
+                                        <span className="font-bold">10</span>
+                                    </button>
+
+                                    <button
+                                        onClick={() => onBuyItem('SPECIAL_FORCES')}
+                                        disabled={supplies < 15 || isFlareActive}
+                                        className={`w-full flex justify-between items-center p-2 text-[8px] border-2 transition-all ${supplies >= 15 && !isFlareActive ? 'bg-orange-900/40 border-orange-500 hover:bg-orange-800/60 text-orange-200 cursor-pointer shadow-[0_0_8px_rgba(249,115,22,0.3)]' : 'bg-slate-900 border-slate-700 text-slate-600 cursor-not-allowed'}`}
+                                    >
+                                        <span>{t('SHOP_SPECIAL_FORCES')}</span>
+                                        <span className="font-bold">15</span>
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </PixelPanel>

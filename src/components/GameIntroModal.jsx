@@ -190,6 +190,15 @@ export const GameIntroModal = ({ onStart, isManual = false }) => {
                                         {t('INTRO_EVENT_MUTANT')}
                                     </p>
                                 </div>
+                                <div className="flex items-start gap-4 pt-2">
+                                    <div className="w-10 h-10 shrink-0 bg-slate-800 border-2 solar-flare-node flex items-center justify-center relative overflow-hidden">
+                                        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjZmZmIiBmaWxsLW9wYWNpdHk9IjAuMDUiLz4KPC9zdmc+')] mix-blend-overlay opacity-30"></div>
+                                        <span className="text-[6px] font-bold text-red-500">???</span>
+                                    </div>
+                                    <p className="text-[10px] text-red-400 leading-relaxed pt-1">
+                                        {t('INTRO_EVENT_FLARE')}
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
