@@ -1076,7 +1076,10 @@ function App() {
               doubleClick={{ disabled: true }}
               panning={{ velocityDisabled: false, disabled: false }}
             >
-              <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full relative flex items-center justify-center">
+              <TransformComponent 
+                wrapperClass="!w-full !h-full" 
+                contentClass={`relative ${!isMobile ? '' : 'flex items-center justify-center !w-full !h-full'}`}
+              >
                 <InteractiveMap
                   territories={territories}
                   onSelect={handleSelect}
