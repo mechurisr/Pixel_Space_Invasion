@@ -972,17 +972,17 @@ function App() {
       )}
 
       {/* Header */}
-      <div className="flex justify-between items-center border-b-4 border-pixel-border pb-2">
-        <div className="flex flex-col">
-          <div className="flex items-baseline gap-2 md:gap-3">
-            <h1 className="text-xl md:text-2xl text-white tracking-widest leading-none">{t('GAME_TITLE')}</h1>
-            <span className="text-[8px] md:text-[10px] text-slate-500 uppercase tracking-wider">Provided by Reality Is Overrated</span>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b-4 border-pixel-border pb-2 gap-2">
+        <div className="flex flex-col w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-baseline gap-1 md:gap-3">
+            <h1 className="text-lg md:text-2xl text-white tracking-widest leading-none">{t('GAME_TITLE')}</h1>
+            <span className="text-[7px] md:text-[10px] text-slate-500 uppercase tracking-wider opacity-60">Provided by Reality Is Overrated</span>
           </div>
-          <span className="text-[10px] text-blue-400 mt-1">
+          <span className="text-[9px] md:text-[10px] text-blue-400 mt-1">
             {gameState === 'SELECT_START' ? t('INITIALIZATION_STATUS') : t('TURN_STATUS', { turn })}
           </span>
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex flex-wrap gap-2 md:gap-4 items-center w-full md:w-auto justify-start md:justify-end">
           {freeNukes > 0 && (
             <div className="hidden md:flex items-center text-[10px] text-yellow-400 font-bold border-2 border-yellow-500 bg-yellow-900/40 px-3 py-1 shadow-[0_0_10px_rgba(250,204,21,0.5)] animate-pulse">
               ⚠ TACTICAL NUKE READY ({freeNukes})
