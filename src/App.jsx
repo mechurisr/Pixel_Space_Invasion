@@ -1070,11 +1070,11 @@ function App() {
               initialScale={1}
               minScale={0.5}
               maxScale={4}
-              disabled={!isMobile}
+              disabled={false}
               wheel={{ step: 0.1, disabled: !isMobile }}
               pinch={{ step: 5, disabled: !isMobile }}
               doubleClick={{ disabled: true }}
-              panning={{ velocityDisabled: false, disabled: !isMobile }}
+              panning={{ velocityDisabled: false, disabled: false }}
             >
               <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full relative flex items-center justify-center">
                 <InteractiveMap
