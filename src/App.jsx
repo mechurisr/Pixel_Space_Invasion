@@ -1066,35 +1066,50 @@ function App() {
           )}
 
           <div className="w-full h-full max-h-[800px] relative">
-            <TransformWrapper
-              initialScale={1}
-              minScale={0.5}
-              maxScale={4}
-              disabled={false}
-              wheel={{ step: 0.1, disabled: !isMobile }}
-              pinch={{ step: 5, disabled: !isMobile }}
-              doubleClick={{ disabled: true }}
-              panning={{ velocityDisabled: false, disabled: false }}
-            >
-              <TransformComponent 
-                wrapperClass="!w-full !h-full" 
-                contentClass={`relative ${!isMobile ? '' : 'flex items-center justify-center !w-full !h-full'}`}
+            {isMobile ? (
+              <TransformWrapper
+                initialScale={1}
+                minScale={0.5}
+                maxScale={4}
+                wheel={{ step: 0.1 }}
+                pinch={{ step: 5 }}
+                doubleClick={{ disabled: true }}
+                panning={{ velocityDisabled: false }}
               >
-                <InteractiveMap
-                  territories={territories}
-                  onSelect={handleSelect}
-                  selectedId={selectedCountry?.id}
-                  playerIds={playerIds}
-                  aiData={aiData}
-                  aiFactions={AI_FACTIONS}
-                  invasionTargetMode={invasionTargetMode}
-                  transferTargetMode={transferTargetMode}
-                  nukeTargetMode={nukeTargetMode}
-                  actedRegions={actedRegions}
-                  solarFlareZones={solarFlareZones}
-                />
-              </TransformComponent>
-            </TransformWrapper>
+                <TransformComponent 
+                  wrapperClass="!w-full !h-full" 
+                  contentClass="relative flex items-center justify-center !w-full !h-full"
+                >
+                  <InteractiveMap
+                    territories={territories}
+                    onSelect={handleSelect}
+                    selectedId={selectedCountry?.id}
+                    playerIds={playerIds}
+                    aiData={aiData}
+                    aiFactions={AI_FACTIONS}
+                    invasionTargetMode={invasionTargetMode}
+                    transferTargetMode={transferTargetMode}
+                    nukeTargetMode={nukeTargetMode}
+                    actedRegions={actedRegions}
+                    solarFlareZones={solarFlareZones}
+                  />
+                </TransformComponent>
+              </TransformWrapper>
+            ) : (
+              <InteractiveMap
+                territories={territories}
+                onSelect={handleSelect}
+                selectedId={selectedCountry?.id}
+                playerIds={playerIds}
+                aiData={aiData}
+                aiFactions={AI_FACTIONS}
+                invasionTargetMode={invasionTargetMode}
+                transferTargetMode={transferTargetMode}
+                nukeTargetMode={nukeTargetMode}
+                actedRegions={actedRegions}
+                solarFlareZones={solarFlareZones}
+              />
+            )}
           </div>
 
           {(invasionTargetMode || transferTargetMode || nukeTargetMode || specialForcesTargetMode) && (

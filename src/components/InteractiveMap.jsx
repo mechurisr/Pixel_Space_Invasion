@@ -4,7 +4,7 @@ import { useLanguage } from '../LanguageContext'
 export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [], solarFlareZones = [] }) => {
     const { t } = useLanguage()
     return (
-        <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border overflow-hidden flex items-center justify-center">
+        <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border md:overflow-auto overflow-hidden md:block flex items-center justify-center">
             <div className="md:min-w-[1200px] md:min-h-[600px] w-full h-full relative aspect-video md:aspect-auto">
                 {/* SVG layer for connection lines */}
                 <svg className="absolute inset-0 w-full h-full pointer-events-none stroke-slate-700/50" strokeWidth="2" strokeDasharray="4 4">
