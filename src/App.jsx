@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { CountryInfoPanel } from './components/CountryInfoPanel'
 import { InteractiveMap } from './components/InteractiveMap'
 import { EventLogPanel } from './components/EventLogPanel'
@@ -61,6 +62,13 @@ function App() {
   const [nukeTargetMode, setNukeTargetMode] = useState(false)
   const [specialForcesTargetMode, setSpecialForcesTargetMode] = useState(false)
   const [showManual, setShowManual] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+
+  React.useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Win/Loss Condition Check
   React.useEffect(() => {
@@ -1022,25 +1030,32 @@ function App() {
       </div>
 
       {/* Main Content Areas */}
-      <div className="flex-1 flex flex-col md:flex-row gap-4 overflow-hidden relative">
+      <div className="flex-1 flex flex-col md:flex-row gap-0 md:gap-4 overflow-hidden relative">
 
-        {/* Left: Info Panel (20%) */}
-        <div className="w-full md:w-1/5 h-1/3 md:h-full z-10">
-          <CountryInfoPanel
-            country={selectedCountry}
-            isPlayerOwned={playerIds.includes(selectedCountry?.id)}
-            hasActed={actedRegions.includes(selectedCountry?.id)}
-            onExecuteProtocol={executeProtocolClick}
-            gameState={gameState}
-            isTargetingMode={invasionTargetMode || transferTargetMode || nukeTargetMode || specialForcesTargetMode}
-            supplies={supplies}
-            solarFlareZones={solarFlareZones}
-            onBuyItem={handleBuyItem}
-          />
+        {/* Left: Info Panel (Desktop) / Bottom Sheet (Mobile) */}
+        <div className={`w-full md:w-1/5 z-20 transition-all duration-300 order-2 md:order-1 flex flex-col ${selectedCountry ? 'h-[55vh] md:h-full bg-slate-900 border-t-4 border-pixel-border md:border-t-0 md:bg-transparent' : 'hidden md:flex md:h-full'}`}>
+          {selectedCountry && (
+             <div className="md:hidden flex shrink-0 justify-center items-center py-2 bg-pixel-panel border-b-4 border-pixel-border cursor-pointer active:bg-slate-800" onClick={() => setSelectedCountryId(null)}>
+                <div className="w-16 h-1.5 bg-slate-500 rounded-full"></div>
+             </div>
+          )}
+          <div className="flex-1 overflow-hidden">
+            <CountryInfoPanel
+              country={selectedCountry}
+              isPlayerOwned={playerIds.includes(selectedCountry?.id)}
+              hasActed={actedRegions.includes(selectedCountry?.id)}
+              onExecuteProtocol={executeProtocolClick}
+              gameState={gameState}
+              isTargetingMode={invasionTargetMode || transferTargetMode || nukeTargetMode || specialForcesTargetMode}
+              supplies={supplies}
+              solarFlareZones={solarFlareZones}
+              onBuyItem={handleBuyItem}
+            />
+          </div>
         </div>
 
         {/* Center: Map (80%) */}
-        <div className={`w-full md:w-4/5 h-2/3 md:h-full flex items-center justify-center bg-[#050B14] border-4 border-pixel-border p-4 relative overflow-hidden transition-colors duration-1000 ${solarFlareZones.length > 0 ? 'bg-red-950/20' : ''}`}>
+        <div className={`w-full md:w-4/5 flex-1 md:h-full order-1 md:order-2 flex items-center justify-center bg-[#050B14] border-4 border-pixel-border p-4 relative overflow-hidden transition-colors duration-1000 ${solarFlareZones.length > 0 ? 'bg-red-950/20' : ''}`}>
           {/* Subtle grid background for the map container */}
           <div className={`absolute inset-0 opacity-5 pointer-events-none transition-colors duration-1000 ${solarFlareZones.length > 0 ? 'bg-[radial-gradient(#ef4444_1px,transparent_0)]' : 'bg-[radial-gradient(#fff_1px,transparent_0)]'}`}
             style={{ backgroundSize: '30px 30px' }}></div>
@@ -1051,19 +1066,32 @@ function App() {
           )}
 
           <div className="w-full h-full max-h-[800px] relative">
-            <InteractiveMap
-              territories={territories}
-              onSelect={handleSelect}
-              selectedId={selectedCountry?.id}
-              playerIds={playerIds}
-              aiData={aiData}
-              aiFactions={AI_FACTIONS}
-              invasionTargetMode={invasionTargetMode}
-              transferTargetMode={transferTargetMode}
-              nukeTargetMode={nukeTargetMode}
-              actedRegions={actedRegions}
-              solarFlareZones={solarFlareZones}
-            />
+            <TransformWrapper
+              initialScale={1}
+              minScale={0.5}
+              maxScale={4}
+              disabled={!isMobile}
+              wheel={{ step: 0.1, disabled: !isMobile }}
+              pinch={{ step: 5, disabled: !isMobile }}
+              doubleClick={{ disabled: true }}
+              panning={{ velocityDisabled: false, disabled: !isMobile }}
+            >
+              <TransformComponent wrapperClass="!w-full !h-full" contentClass="!w-full !h-full relative flex items-center justify-center">
+                <InteractiveMap
+                  territories={territories}
+                  onSelect={handleSelect}
+                  selectedId={selectedCountry?.id}
+                  playerIds={playerIds}
+                  aiData={aiData}
+                  aiFactions={AI_FACTIONS}
+                  invasionTargetMode={invasionTargetMode}
+                  transferTargetMode={transferTargetMode}
+                  nukeTargetMode={nukeTargetMode}
+                  actedRegions={actedRegions}
+                  solarFlareZones={solarFlareZones}
+                />
+              </TransformComponent>
+            </TransformWrapper>
           </div>
 
           {(invasionTargetMode || transferTargetMode || nukeTargetMode || specialForcesTargetMode) && (
@@ -1077,8 +1105,8 @@ function App() {
         </div>
       </div>
 
-      {/* Bottom: Event Log (20%) */}
-      <div className="h-1/5 w-full z-10">
+      {/* Bottom: Event Log */}
+      <div className="shrink-0 w-full z-10">
         <EventLogPanel events={events} />
       </div>
     </div>
