@@ -6,6 +6,7 @@ import { EventLogPanel } from './components/EventLogPanel'
 import { ActionModal } from './components/ActionModal'
 import { GameIntroModal } from './components/GameIntroModal'
 import { GameOverModal } from './components/GameOverModal'
+import { TutorialInstructorPanel } from './components/TutorialInstructorPanel'
 import { generateWorldMap } from './mapData'
 import { useLanguage } from './LanguageContext'
 
@@ -52,6 +53,7 @@ function App() {
   const [solarFlareZones, setSolarFlareZones] = useState(initialSave?.solarFlareZones || [])
   const [solarFlareDuration, setSolarFlareDuration] = useState(initialSave?.solarFlareDuration || 0)
   const [turnsSinceLastSupply, setTurnsSinceLastSupply] = useState(initialSave?.turnsSinceLastSupply || 0)
+  const [tutorialStep, setTutorialStep] = useState(initialSave?.tutorialStep !== undefined ? initialSave.tutorialStep : -1) // -1 means not in tutorial
   const [events, setEvents] = useState(() => {
     return initialSave?.events || [{ timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }]
   })
@@ -98,7 +100,8 @@ function App() {
         supplies,
         solarFlareZones,
         solarFlareDuration,
-        turnsSinceLastSupply
+        turnsSinceLastSupply,
+        tutorialStep
       }
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveData))
     } else if (gameState === 'GAME_OVER_VICTORY' || gameState === 'GAME_OVER_DEFEAT') {
@@ -125,7 +128,15 @@ function App() {
     setNukeTargetMode(false)
     setSpecialForcesTargetMode(false)
     setShowActionModal(false)
+    setTutorialStep(-1)
     setGameState('INTRO')
+  }
+
+  const handleStartTutorial = () => {
+    handleRestartGame()
+    setShowManual(false)
+    setGameState('SELECT_START') // Skip Intro Modal
+    setTutorialStep(0) // Step 0 is the welcome dialog before doing anything
   }
 
   const handleManualRestart = () => {
@@ -140,6 +151,30 @@ function App() {
   }
 
   const handleSelect = (country) => {
+    if (tutorialStep > -1) {
+      if (tutorialStep === 1 && gameState === 'SELECT_START') {
+        if (country.id !== 23) return; // London
+        setTutorialStep(2);
+      }
+      else if (tutorialStep === 3 && invasionTargetMode) {
+        if (country.id !== 24) return; // Paris
+      }
+      else if (tutorialStep === 7 && invasionTargetMode) {
+        if (country.id !== 26) return; // Madrid
+      }
+      else if (tutorialStep === 9 && transferTargetMode) {
+        if (country.id !== 23) return; // London
+      }
+      else {
+        // Block other selections
+        if (tutorialStep === 2 && country.id !== 23) return;
+        if (tutorialStep === 4 && country.id !== 24) return;
+        if (tutorialStep === 6 && country.id !== 23) return; // Force London
+        if (tutorialStep === 8 && country.id !== 26) return;
+        if (tutorialStep === 9 && !transferTargetMode && country.id !== 26) return;
+      }
+    }
+
     if (gameState === 'SELECT_START') {
       const newTerritories = [...territories]
 
@@ -248,6 +283,8 @@ function App() {
   }
 
   const executeProtocolClick = (actionType) => {
+    if (tutorialStep === 5 || tutorialStep === 8 || tutorialStep === 10) return;
+
     if (playerIds.includes(selectedCountry?.id) && !actedRegions.includes(selectedCountry?.id)) {
       // Cancel targeting mode if active
       if (invasionTargetMode === selectedCountry?.id) { setInvasionTargetMode(false); setShowActionModal(true); return; }
@@ -264,6 +301,15 @@ function App() {
   }
 
   const handlePlayerAction = (actionType) => {
+    if (tutorialStep > -1) {
+      if (tutorialStep === 2 && actionType === 'INVADE') setTutorialStep(3);
+      else if (tutorialStep === 4 && actionType === 'TECH') setTutorialStep(5);
+      else if (tutorialStep === 6 && actionType === 'MILITARY') setTutorialStep(7);
+      else if (tutorialStep === 7 && actionType === 'INVADE') {} // allowed
+      else if (tutorialStep === 9 && actionType === 'TRANSFER') {} // allowed
+      else return; // block others
+    }
+
     setShowActionModal(false)
     const pCountry = territories.find(t => t.id === selectedCountry.id)
 
@@ -313,22 +359,48 @@ function App() {
   }
 
   const handlePlayerInvasion = (target) => {
-    const invadingRegionId = invasionTargetMode;
-    setInvasionTargetMode(false);
+    const sourceId = invasionTargetMode;
+    const source = territories.find(t => t.id === sourceId);
 
-    const pCountry = territories.find(t => t.id === invadingRegionId);
-    if (!pCountry) return;
+    if (!source) return;
 
-    if (!pCountry.neighbors.includes(target.id)) {
-      addEvent(t('OUT_OF_RANGE', { name: t(pCountry.name) }), 'alert');
+    // 1. Validation Checks
+    if (!source.neighbors.includes(target.id)) {
+      addEvent(t('OUT_OF_RANGE', { name: t(source.name) }), 'error');
+      setInvasionTargetMode(false);
       return;
     }
+    
+    // 2. Tutorial Progression Check (Only if target is validly adjacent)
+    if (tutorialStep > -1) {
+      if (tutorialStep === 3 && target.id === 24) {
+        setTutorialStep(4);
+        setSelectedCountryId(24); // Auto-select for Step 4
+      }
+      else if (tutorialStep === 7 && target.id === 26) {
+        setTutorialStep(8);
+        setSelectedCountryId(26); // Auto-select for Step 8/9
+      }
+      else {
+        setInvasionTargetMode(false);
+        return; // block incorrect tutorial targets
+      }
+    }
+
+    setInvasionTargetMode(false);
+    const pCountry = source;
 
     // Mark as acted regardless of win or loss
-    setActedRegions(prev => [...prev, invadingRegionId]);
+    setActedRegions(prev => [...prev, sourceId]);
 
     let pForce = getEffectiveMilitary(pCountry);
     let tForce = getEffectiveMilitary(target);
+
+    // Guaranteed win for tutorial steps to prevent soft-locks
+    if (tutorialStep === 3 || tutorialStep === 7) {
+      pForce = 100;
+      tForce = 0;
+    }
 
     // Psionic Shockwave (Defense)
     if (target.isOccupied && target.mutationUnit === 'PSIONIC ALIEN SPECIALIST') {
@@ -399,6 +471,11 @@ function App() {
   };
 
   const handlePlayerTransfer = (target) => {
+    if (tutorialStep > -1) {
+      if (tutorialStep === 9 && target.id === 23) setTutorialStep(10);
+      else return;
+    }
+
     const sourceId = transferTargetMode
     setTransferTargetMode(false)
 
@@ -468,6 +545,11 @@ function App() {
   }
 
   const handleBuyItem = (itemType) => {
+    if (tutorialStep > -1) {
+      if (tutorialStep === 8 && itemType === 'RESOURCE') setTutorialStep(9);
+      else return; // block
+    }
+
     if (!selectedCountry) return;
     
     // Nuke doesn't strictly need a player-owned region selected to buy, but to be consistent or just allow it:
@@ -525,6 +607,11 @@ function App() {
   }
 
   const handleNextTurn = () => {
+    if (tutorialStep > -1) {
+      if (tutorialStep === 5) setTutorialStep(6);
+      else return;
+    }
+
     setTurn(t => t + 1)
     setActedRegions([])
     let updateLogs = []
@@ -540,7 +627,12 @@ function App() {
       const nextNukeStatus = terr.nukeStatus === 'DEVELOPING' ? 'READY' : terr.nukeStatus
       if (terr.nukeStatus === 'DEVELOPING') updateLogs.push(t('NUKE_READY', { name: t(terr.name) }))
 
-      return { ...terr, oil: Math.min(100, terr.oil + passiveOil), nukeStatus: nextNukeStatus }
+      let nextHasSupply = terr.hasSupply;
+      if (tutorialStep === 5 && terr.id === 26) {
+        nextHasSupply = true;
+      }
+
+      return { ...terr, oil: Math.min(100, terr.oil + passiveOil), nukeStatus: nextNukeStatus, hasSupply: nextHasSupply }
     })
     let newAiData = JSON.parse(JSON.stringify(aiData))
     let newPlayerIds = [...playerIds]
@@ -946,12 +1038,20 @@ function App() {
 
   return (
     <div className="h-screen w-full bg-pixel-bg p-4 flex flex-col gap-4 font-pixel select-none relative">
+      <TutorialInstructorPanel 
+        step={tutorialStep} 
+        onNextStep={() => {
+          if (tutorialStep === 0) setTutorialStep(1);
+          if (tutorialStep === 10) handleRestartGame(); // Ends tutorial and goes back to intro
+        }} 
+      />
+
       {gameState === 'INTRO' && (
-        <GameIntroModal onStart={() => setGameState('SELECT_START')} />
+        <GameIntroModal onStart={() => setGameState('SELECT_START')} onStartTutorial={handleStartTutorial} />
       )}
 
       {showManual && gameState !== 'INTRO' && (
-        <GameIntroModal onStart={() => setShowManual(false)} isManual={true} />
+        <GameIntroModal onStart={() => setShowManual(false)} isManual={true} onStartTutorial={handleStartTutorial} />
       )}
       
       {gameState === 'GAME_OVER_VICTORY' && (
@@ -968,6 +1068,7 @@ function App() {
           onAction={handlePlayerAction}
           onClose={() => setShowActionModal(false)}
           freeNukes={freeNukes}
+          tutorialStep={tutorialStep}
         />
       )}
 
@@ -1050,6 +1151,7 @@ function App() {
               supplies={supplies}
               solarFlareZones={solarFlareZones}
               onBuyItem={handleBuyItem}
+              tutorialStep={tutorialStep}
             />
           </div>
         </div>
@@ -1092,6 +1194,7 @@ function App() {
                     nukeTargetMode={nukeTargetMode}
                     actedRegions={actedRegions}
                     solarFlareZones={solarFlareZones}
+                    tutorialStep={tutorialStep}
                   />
                 </TransformComponent>
               </TransformWrapper>
@@ -1108,6 +1211,7 @@ function App() {
                 nukeTargetMode={nukeTargetMode}
                 actedRegions={actedRegions}
                 solarFlareZones={solarFlareZones}
+                tutorialStep={tutorialStep}
               />
             )}
           </div>

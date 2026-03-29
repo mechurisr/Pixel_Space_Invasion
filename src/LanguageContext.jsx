@@ -15,7 +15,10 @@ export const LanguageProvider = ({ children }) => {
     }, [lang])
 
     const t = (key, params = {}) => {
-        let text = translations[lang][key] || translations['en'][key] || key
+        const keys = key.split('.');
+        let text = keys.reduce((obj, k) => (obj || {})[k], translations[lang]) 
+                   || keys.reduce((obj, k) => (obj || {})[k], translations['en']) 
+                   || key;
 
         // Replace parameters like {turn} or {name}
         Object.keys(params).forEach(p => {

@@ -1,7 +1,7 @@
 import React from 'react'
 import { useLanguage } from '../LanguageContext'
 
-export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [], solarFlareZones = [] }) => {
+export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [], solarFlareZones = [], tutorialStep = 0 }) => {
     const { t } = useLanguage()
     return (
         <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border md:overflow-auto overflow-hidden md:block flex items-center justify-center">
@@ -73,7 +73,15 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                         }
                     }
 
-                    if (isTargetable && !isPlayer) {
+                    const isTutorialTarget = 
+                        (tutorialStep === 1 && node.id === 23) ||
+                        (tutorialStep === 3 && node.id === 24) ||
+                        (tutorialStep === 7 && node.id === 26) ||
+                        (tutorialStep === 9 && node.id === 23);
+
+                    if (isTutorialTarget) {
+                        nodeClass += ' ring-[6px] ring-yellow-400 ring-offset-2 ring-offset-black animate-pulse shadow-[0_0_20px_rgba(250,204,21,0.8)] z-40 cursor-pointer'
+                    } else if (isTargetable && !isPlayer) {
                         nodeClass += ' ring-4 ring-red-500 ring-offset-2 ring-offset-black animate-pulse cursor-crosshair z-20'
                     } else if (isTransferTargetable) {
                         nodeClass += ' ring-4 ring-green-400 ring-offset-2 ring-offset-black animate-pulse cursor-pointer z-20'

@@ -2,7 +2,7 @@ import React from 'react'
 import { PixelPanel } from './PixelPanel'
 import { useLanguage } from '../LanguageContext'
 
-export const ActionModal = ({ country, onAction, onClose, freeNukes = 0 }) => {
+export const ActionModal = ({ country, onAction, onClose, freeNukes = 0, tutorialStep = 0 }) => {
     const { t } = useLanguage()
 
     return (
@@ -12,7 +12,11 @@ export const ActionModal = ({ country, onAction, onClose, freeNukes = 0 }) => {
                     <div className="space-y-4">
                         <button
                             onClick={() => onAction('TECH')}
-                            className="w-full text-left p-3 border-2 border-blue-500/50 bg-blue-900/30 hover:bg-blue-800/50 flex flex-col gap-1 transition-colors"
+                            className={`w-full text-left p-3 border-2 flex flex-col gap-1 transition-colors ${
+                                tutorialStep === 4 
+                                ? 'border-yellow-400 bg-yellow-900/60 shadow-[0_0_20px_rgba(250,204,21,0.8)] animate-pulse ring-4 ring-yellow-400' 
+                                : 'border-blue-500/50 bg-blue-900/30 hover:bg-blue-800/50'
+                            }`}
                         >
                             <span className="text-[10px] text-blue-300 font-bold">{t('TECH_ADVANCEMENT')}</span>
                             <span className="text-[7px] text-slate-400">{t('TECH_DESC')}</span>
@@ -20,7 +24,11 @@ export const ActionModal = ({ country, onAction, onClose, freeNukes = 0 }) => {
 
                         <button
                             onClick={() => onAction('MILITARY')}
-                            className="w-full text-left p-3 border-2 border-red-500/50 bg-red-900/30 hover:bg-red-800/50 flex flex-col gap-1 transition-colors"
+                            className={`w-full text-left p-3 border-2 flex flex-col gap-1 transition-colors ${
+                                tutorialStep === 6 
+                                ? 'border-yellow-400 bg-yellow-900/60 shadow-[0_0_20px_rgba(250,204,21,0.8)] animate-pulse ring-4 ring-yellow-400' 
+                                : 'border-red-500/50 bg-red-900/30 hover:bg-red-800/50'
+                            }`}
                         >
                             <span className="text-[10px] text-red-300 font-bold">{t('MILITARY_REINFORCEMENT')}</span>
                             <span className="text-[7px] text-slate-400">{t('MIL_DESC')}</span>
@@ -28,7 +36,11 @@ export const ActionModal = ({ country, onAction, onClose, freeNukes = 0 }) => {
 
                         <button
                             onClick={() => onAction('TRANSFER')}
-                            className="w-full text-left p-3 border-2 border-green-500/50 bg-green-900/30 hover:bg-green-800/50 flex flex-col gap-1 transition-colors"
+                            className={`w-full text-left p-3 border-2 flex flex-col gap-1 transition-colors ${
+                                tutorialStep === 9 
+                                ? 'border-yellow-400 bg-yellow-900/60 shadow-[0_0_20px_rgba(250,204,21,0.8)] animate-pulse ring-4 ring-yellow-400' 
+                                : 'border-green-500/50 bg-green-900/30 hover:bg-green-800/50'
+                            }`}
                         >
                             <span className="text-[10px] text-green-300 font-bold">{t('TRANSFER_TROOPS')}</span>
                             <span className="text-[7px] text-slate-400">{t('TRANSFER_DESC')}</span>
@@ -56,7 +68,11 @@ export const ActionModal = ({ country, onAction, onClose, freeNukes = 0 }) => {
 
                         <button
                             onClick={() => onAction('INVADE')}
-                            className="w-full text-left p-3 border-2 border-yellow-500/50 bg-yellow-900/30 hover:bg-yellow-800/50 flex flex-col gap-1 transition-colors"
+                            className={`w-full text-left p-3 border-2 flex flex-col gap-1 transition-colors ${
+                                (tutorialStep === 2 || tutorialStep === 7)
+                                ? 'border-yellow-400 bg-yellow-900/60 shadow-[0_0_20px_rgba(250,204,21,0.8)] animate-pulse ring-4 ring-yellow-400' 
+                                : 'border-yellow-500/50 bg-yellow-900/30 hover:bg-yellow-800/50'
+                            }`}
                         >
                             <span className="text-[10px] text-yellow-300 font-bold">{t('COMMENCE_INVASION')}</span>
                             <span className="text-[7px] text-slate-400">{t('INVASION_DESC')}</span>

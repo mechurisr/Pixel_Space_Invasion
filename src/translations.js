@@ -221,6 +221,22 @@ export const translations = {
         Tokyo: "Tokyo",
         Kamchatka: "Kamchatka",
         Auckland: "Auckland",
+        
+        // Tutorial
+        TUTORIAL: {
+            STEP_0: "Rookie Commander, welcome. I am Captain Steel, your drill instructor. You're greener than grass, but we don't have time. Let's begin the simulation immediately. Click to continue.",
+            STEP_1: "First, we must establish a Command Node. Click on the yellow blinking sector on the map to set up our base.",
+            STEP_2: "Good. Now we need to secure the sector. Click [EXECUTE PROTOCOL] on the left panel, and select [INVASION].",
+            STEP_3: "Invasion authorized. Time to expand our territory. Click the yellow blinking adjacent sector on the map.",
+            STEP_4: "Sector secured. But our gear is terrible. Select the newly acquired sector and execute [TECH ADVANCEMENT] from the protocols.",
+            STEP_5: "Remember this, Commander. Every action counts. You have no more actions this turn. Click [NEXT_TURN] in the top right.",
+            STEP_6: "We need a strong defense against counterattacks. Select your main base (London) and execute [MILITARY REINFORCEMENT].",
+            STEP_7: "War runs on resources. Capturing sectors with a Supply icon grants bonus materials. Select the vanguard base (Paris) and use [INVASION] to capture the yellow blinking Supply Sector.",
+            STEP_8: "Excellent! We have secured supplies. Click the Supplies button at the bottom (or left) panel and request a Resource Drop.",
+            STEP_9: "Now it's time to reorganize. Never leave your troops too scattered. Select the sector you just captured and execute [TRANSFER] to move troops back to your main base.",
+            STEP_10: "That covers the basics. Real combat won't be this forgiving. Try to stay alive out there. Good luck, Commander.",
+            FINISH_BTN: "END TUTORIAL & DEPLOY"
+        }
     },
     ko: {
         // UI Header & Common
@@ -444,5 +460,21 @@ export const translations = {
         Tokyo: "도쿄",
         Kamchatka: "캄차카",
         Auckland: "오클랜드",
+        
+        // Tutorial
+        TUTORIAL: {
+            STEP_0: "신입 지휘관, 환영한다. 나는 자네의 기초 통제 훈련을 담당할 스틸 대위다. 외계인 놈들이 앞마당까지 쳐들어왔는데 자네같이 어리버리한 신참이라니 눈앞이 캄캄하군. 당장 시뮬레이션을 시작하도록 하지. 계속해서 진행해라.",
+            STEP_1: "먼저 저항군의 첫 지휘 통제소를 세울 거점을 선택해야 한다. 지도에서 노란색으로 깜빡이는 지역을 클릭해라.",
+            STEP_2: "좋아, 거점은 정해졌다. 구역을 완벽히 통제하기 위해 작전을 시작해야 한다. 좌측 패널의 [프로토콜 실행] 버튼을 누르고, [침공 개시]를 선택해라.",
+            STEP_3: "작전이 인가되었다. 우리의 영토를 확장할 시간이다. 현재 거점과 연결된 노란색으로 깜빡이는 인접 지역을 클릭하여 타격해라.",
+            STEP_4: "점령에 성공했군. 하지만 형편없는 장비로는 이길 수 없다. 방금 점령한 구역을 선택하고, 프로토콜에서 [기술 발전]을 실행해라.",
+            STEP_5: "명심해라, 지휘관. 모든 작전은 신중하게 실행해야 한다. 이번 턴에 행동이 끝난 지역은 더 이상 명령을 내릴 수 없다. 우측 상단의 [NEXT_TURN] 버튼을 눌러라.",
+            STEP_6: "적의 반격에 대비하려면 튼튼한 방어선이 필요하다. 자네의 본진(London)을 선택하고, [군사 보충]을 지시해라.",
+            STEP_7: "전쟁은 자원 싸움이다. 보급품이 있는 지역을 점령하면 물자를 확보할 수 있다. 방금 점령했던 전초기지(Paris)를 선택하고 [침공 개시]를 통해 노란색으로 깜빡이는 마드리드를 점령해라.",
+            STEP_8: "훌륭하다! 보급품을 무사히 확보했군. 하단(또는 좌측) 패널의 보급품(Supplies) 버튼을 눌러 자원 투하를 요청해라.",
+            STEP_9: "이제 방어선을 재정비할 시간이다. 병력이 분산되면 각개격파 당하기 십상이지. 방금 점령한 지역에서 [병력 이동] 프로토콜을 사용해 본진으로 군사력을 집중시켜라.",
+            STEP_10: "기본적인 지휘 시스템은 모두 파악했겠지. 하지만 실전은 이 훈련처럼 호락호락하지 않을 거다. 살아남아서 다시 보기를 바라지. 굿 럭, 지휘관.",
+            FINISH_BTN: "훈련 종료 및 실전 투입"
+        }
     }
 }

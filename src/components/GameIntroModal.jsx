@@ -38,14 +38,14 @@ const AiIcon = () => (
     </svg>
 )
 
-export const GameIntroModal = ({ onStart, isManual = false }) => {
+export const GameIntroModal = ({ onStart, onStartTutorial, isManual = false }) => {
     const { t, lang, toggleLanguage } = useLanguage()
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-500">
             <div className="w-full max-w-2xl max-h-[90vh] flex flex-col">
-                <PixelPanel title={t('INTRO_TITLE')} className="shadow-2xl shadow-blue-900/20 border-blue-500 flex-1 overflow-hidden">
-                    <div className="p-4 space-y-8">
+                <PixelPanel title={t('INTRO_TITLE')} className="shadow-2xl shadow-blue-900/20 border-blue-500 flex-1 overflow-hidden flex flex-col">
+                    <div className="p-4 space-y-8 overflow-y-auto flex-1">
                         
                         {/* Resource Flow Section */}
                         <div className="bg-slate-900/50 p-4 border border-slate-700">
@@ -204,15 +204,36 @@ export const GameIntroModal = ({ onStart, isManual = false }) => {
 
                         {/* Start Button & Lang Toggle */}
                         <div className="pt-4 flex flex-col items-center gap-4">
-                            <button
-                                onClick={onStart}
-                                className="bg-blue-600 hover:bg-blue-500 text-white border-2 border-blue-400 px-12 py-4 text-sm tracking-widest shadow-[0_0_15px_rgba(37,99,235,0.5)] active:translate-y-1 active:shadow-none transition-all Group relative overflow-hidden"
-                            >
-                                {/* Glitch/Scanline effect on hover */}
-                                <div className="absolute inset-0 bg-white/20 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-500"></div>
-                                {isManual ? t('CLOSE_MANUAL') : t('START_GAME')}
-                            </button>
+                            {!isManual && (
+                                <button
+                                    onClick={onStart}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white border-2 border-blue-400 px-12 py-4 text-sm tracking-widest shadow-[0_0_15px_rgba(37,99,235,0.5)] active:translate-y-1 active:shadow-none transition-all group relative overflow-hidden"
+                                >
+                                    {/* Glitch/Scanline effect on hover */}
+                                    <div className="absolute inset-0 bg-white/20 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-500"></div>
+                                    {t('START_GAME')}
+                                </button>
+                            )}
+
+                            {isManual && (
+                                <button
+                                    onClick={onStart}
+                                    className="bg-slate-600 hover:bg-slate-500 text-white border-2 border-slate-400 px-12 py-4 text-sm tracking-widest shadow-[0_0_15px_rgba(100,116,139,0.5)] active:translate-y-1 active:shadow-none transition-all group relative overflow-hidden"
+                                >
+                                    <div className="absolute inset-0 bg-white/20 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-500"></div>
+                                    {t('CLOSE_MANUAL')}
+                                </button>
+                            )}
                             
+                            {onStartTutorial && (
+                                <button
+                                    onClick={onStartTutorial}
+                                    className="bg-yellow-600 hover:bg-yellow-500 text-white border-2 border-yellow-400 px-12 py-3 text-xs tracking-widest shadow-[0_0_10px_rgba(202,138,4,0.5)] active:translate-y-1 active:shadow-none transition-all group relative overflow-hidden animate-pulse"
+                                >
+                                    {lang === 'ko' ? '튜토리얼 시작 (START TUTORIAL)' : 'START TUTORIAL'}
+                                </button>
+                            )}
+
                             <button
                                 onClick={toggleLanguage}
                                 className="text-slate-400 hover:text-white text-[10px] underline decoration-slate-600 hover:decoration-slate-400 underline-offset-4 transition-colors"

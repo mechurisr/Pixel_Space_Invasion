@@ -3,7 +3,7 @@ import { PixelPanel } from './PixelPanel'
 import { OilIcon, TechIcon, MilitaryIcon } from './Icons'
 import { useLanguage } from '../LanguageContext'
 
-export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecuteProtocol, gameState, isTargetingMode, supplies = 0, onBuyItem, solarFlareZones = [] }) => {
+export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecuteProtocol, gameState, isTargetingMode, supplies = 0, onBuyItem, solarFlareZones = [], tutorialStep = 0 }) => {
     const { t } = useLanguage()
     const [isShopOpen, setIsShopOpen] = React.useState(false)
 
@@ -132,7 +132,9 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                         onClick={onExecuteProtocol}
                         disabled={!isPlayerOwned || country.isOccupied || hasActed || isFlareActive}
                         className={`w-full border-2 shadow-pixel px-2 py-3 text-[8px] transition-all
-              ${isPlayerOwned && !country.isOccupied && !hasActed && !isFlareActive
+              ${tutorialStep === 2 || tutorialStep === 4 || tutorialStep === 6 || tutorialStep === 9
+                                ? 'bg-yellow-600 hover:bg-yellow-500 border-yellow-400 text-white animate-pulse ring-4 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]'
+                                : isPlayerOwned && !country.isOccupied && !hasActed && !isFlareActive
                                 ? isTargetingMode
                                     ? 'bg-red-800 hover:bg-red-700 border-red-400 text-white active:translate-x-1 active:translate-y-1 active:shadow-none'
                                     : 'bg-blue-800 hover:bg-blue-700 border-blue-400 text-white active:translate-x-1 active:translate-y-1 active:shadow-none'
@@ -150,7 +152,11 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                         <div className="mt-4 border-t-2 border-pixel-border/20 pt-4">
                             <button 
                                 onClick={() => setIsShopOpen(!isShopOpen)}
-                                className="w-full flex justify-between items-center mb-2 px-1 hover:bg-white/5 cursor-pointer rounded transition-colors"
+                                className={`w-full flex justify-between items-center mb-2 px-1 hover:bg-white/5 cursor-pointer rounded transition-colors ${
+                                    tutorialStep === 8 && !isShopOpen 
+                                    ? 'bg-yellow-900/60 border-2 border-yellow-400 animate-pulse shadow-[0_0_10px_rgba(250,204,21,0.5)]' 
+                                    : ''
+                                }`}
                             >
                                 <span className="text-[10px] text-yellow-400 font-bold tracking-widest flex items-center gap-2">
                                     {t('SUPPLIES_LABEL')}
@@ -179,11 +185,17 @@ export const CountryInfoPanel = ({ country, isPlayerOwned, hasActed, onExecutePr
                                         <span className="font-bold">10</span>
                                     </button>
 
-                                    <button
-                                        onClick={() => onBuyItem('RESOURCE')}
-                                        disabled={supplies < 10 || (!isPlayerOwned || country.isOccupied) || isFlareActive}
-                                        className={`w-full flex justify-between items-center p-2 text-[8px] border-2 transition-all ${supplies >= 10 && (isPlayerOwned && !country.isOccupied) && !isFlareActive ? 'bg-blue-900/40 border-blue-500 hover:bg-blue-800/60 text-blue-200 cursor-pointer' : 'bg-slate-900 border-slate-700 text-slate-600 cursor-not-allowed'}`}
-                                    >
+                                     <button
+                                         onClick={() => onBuyItem('RESOURCE')}
+                                         disabled={supplies < 10 || (!isPlayerOwned || country.isOccupied) || isFlareActive}
+                                         className={`w-full flex justify-between items-center p-2 text-[8px] border-2 transition-all ${
+                                             tutorialStep === 8 
+                                             ? 'bg-yellow-900/60 border-yellow-400 text-yellow-200 cursor-pointer animate-pulse ring-4 ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]'
+                                             : supplies >= 10 && (isPlayerOwned && !country.isOccupied) && !isFlareActive 
+                                             ? 'bg-blue-900/40 border-blue-500 hover:bg-blue-800/60 text-blue-200 cursor-pointer' 
+                                             : 'bg-slate-900 border-slate-700 text-slate-600 cursor-not-allowed'
+                                         }`}
+                                     >
                                         <span>{t('SHOP_RESOURCE')}</span>
                                         <span className="font-bold">10</span>
                                     </button>
