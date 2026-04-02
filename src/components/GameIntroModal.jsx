@@ -44,7 +44,13 @@ export const GameIntroModal = ({ onStart, onStartTutorial, isManual = false }) =
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-500">
             <div className="w-full max-w-2xl max-h-[90vh] flex flex-col">
-                <PixelPanel title={t('INTRO_TITLE')} className="shadow-2xl shadow-blue-900/20 border-blue-500 flex-1 overflow-hidden flex flex-col">
+                <PixelPanel title={t('INTRO_TITLE')} className="shadow-2xl shadow-blue-900/20 border-blue-500 flex-1 overflow-hidden flex flex-col relative">
+                    <button
+                        onClick={toggleLanguage}
+                        className="absolute top-3 right-4 z-10 text-slate-400 hover:text-white text-[11px] font-bold px-3 py-1.5 bg-slate-800 border border-slate-600 rounded shadow-md transition-colors"
+                    >
+                        {lang === 'en' ? '한국어 (KO)' : 'ENGLISH (EN)'}
+                    </button>
                     <div className="p-4 space-y-8 overflow-y-auto flex-1">
                         
                         {/* Resource Flow Section */}
@@ -233,13 +239,6 @@ export const GameIntroModal = ({ onStart, onStartTutorial, isManual = false }) =
                                     {lang === 'ko' ? '튜토리얼 시작 (START TUTORIAL)' : 'START TUTORIAL'}
                                 </button>
                             )}
-
-                            <button
-                                onClick={toggleLanguage}
-                                className="text-slate-400 hover:text-white text-[10px] underline decoration-slate-600 hover:decoration-slate-400 underline-offset-4 transition-colors"
-                            >
-                                {lang === 'en' ? '한국어로 전환 (KO)' : 'SWITCH TO ENGLISH (EN)'}
-                            </button>
                         </div>
 
                     </div>

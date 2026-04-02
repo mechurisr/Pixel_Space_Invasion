@@ -4,10 +4,23 @@ import { translations } from './translations'
 const LanguageContext = createContext()
 
 export const LanguageProvider = ({ children }) => {
-    // Try to get saved language from localStorage or default to 'en'
+    // Try to get saved language from localStorage or default based on region
     const [lang, setLang] = useState(() => {
         const saved = localStorage.getItem('pixel_space_invasion_lang')
-        return saved || 'en'
+        if (saved) return saved
+        
+        try {
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+            if (timeZone === 'Asia/Seoul') {
+                return 'ko'
+            }
+            if (navigator.language && navigator.language.startsWith('ko')) {
+                return 'ko'
+            }
+        } catch (e) {
+            // fallback
+        }
+        return 'en'
     })
 
     useEffect(() => {
