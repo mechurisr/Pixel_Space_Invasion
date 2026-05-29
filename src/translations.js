@@ -222,6 +222,23 @@ export const translations = {
         Kamchatka: "Kamchatka",
         Auckland: "Auckland",
         
+        // Commanders
+        CMD_SKYFALL_NAME: "Commander 'Skyfall' Rex",
+        CMD_SKYFALL_SKILL: "Drop Zone!",
+        CMD_SKYFALL_DESC: "Target 1 non-adjacent enemy region. -50% Military, halts Oil production for 1 turn. (Captures if Military <= 20)",
+        CMD_BOOM_NAME: "Dr. 'Boom' Spark",
+        CMD_BOOM_SKILL: "Orbital Strike",
+        CMD_BOOM_DESC: "Orbital Strike on target and adjacent enemy regions. -40 Military, destroys 30% of Tech.",
+        CMD_IRON_NAME: "General 'Iron' Wall",
+        CMD_IRON_SKILL: "Instant Shield",
+        CMD_IRON_DESC: "Deploy shield on 1 friendly region for 1 turn. Prevents all Military loss from invasions or aliens.",
+        SELECT_COMMANDER_TITLE: "SELECT YOUR COMMANDER",
+        COMMANDER_SELECTED: "{name} selected as your commander.",
+        SKILL_COOLDOWN: "COOLDOWN: {turns} TURN(S)",
+        SKILL_READY: "SKILL READY",
+        USE_SKILL: "USE SKILL",
+        CMD_TARGET_HINT: "SELECT TARGET FOR COMMANDER SKILL",
+
         // Tutorial
         TUTORIAL: {
             STEP_0: "Rookie Commander, welcome. I am Captain Steel, your drill instructor. You're greener than grass, but we don't have time. Let's begin the simulation immediately. Click to continue.",
@@ -461,6 +478,23 @@ export const translations = {
         Kamchatka: "캄차카",
         Auckland: "오클랜드",
         
+        // Commanders
+        CMD_SKYFALL_NAME: "사령관 '스카이폴' 렉스",
+        CMD_SKYFALL_SKILL: "강하 개시!",
+        CMD_SKYFALL_DESC: "적 후방 영토 1곳 지정. 군사력 50% 감소 및 1턴간 석유 획득 마비. (군사력 20 이하시 즉시 점령)",
+        CMD_BOOM_NAME: "닥터 '붐' 스파크",
+        CMD_BOOM_SKILL: "광란의 궤도 폭격",
+        CMD_BOOM_DESC: "적 영토 1곳과 인접한 모든 적 영토에 궤도 폭격. 일괄 군사력 -40, 기술력 30% 파괴.",
+        CMD_IRON_NAME: "제너럴 '아이언' 월",
+        CMD_IRON_SKILL: "즉석 철벽 방어막",
+        CMD_IRON_DESC: "아군 영토 1곳에 1턴간 방어막 전개. 적 침공 및 외계인 공격으로부터 군사력 하락을 100% 방어.",
+        SELECT_COMMANDER_TITLE: "사령관 선택",
+        COMMANDER_SELECTED: "{name}이(가) 사령관으로 선택되었습니다.",
+        SKILL_COOLDOWN: "쿨타임: {turns}턴",
+        SKILL_READY: "스킬 준비 완료",
+        USE_SKILL: "스킬 사용",
+        CMD_TARGET_HINT: "사령관 스킬을 사용할 목표 지역을 선택하십시오",
+
         // Tutorial
         TUTORIAL: {
             STEP_0: "신입 지휘관, 환영한다. 나는 자네의 기초 통제 훈련을 담당할 스틸 대위다. 외계인 놈들이 앞마당까지 쳐들어왔는데 자네같이 어리버리한 신참이라니 눈앞이 캄캄하군. 당장 시뮬레이션을 시작하도록 하지. 계속해서 진행해라.",

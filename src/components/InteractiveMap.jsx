@@ -112,6 +112,12 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                             {node.hasSupply && (
                                 <div className="absolute top-0 right-0 w-3 h-3 bg-yellow-400 animate-bounce shadow-[0_0_10px_rgba(250,204,21,0.8)] border border-yellow-200 z-30 -mt-1 -mr-1" title="Supply Drop"></div>
                             )}
+                            {node.shieldTurns > 0 && (
+                                <div className="absolute inset-[-4px] md:inset-[-6px] border-[2px] border-blue-400/80 rounded-sm shadow-[0_0_15px_rgba(96,165,250,0.8)] animate-pulse pointer-events-none z-0">
+                                   <div className="absolute inset-0 bg-blue-400/30 mix-blend-overlay"></div>
+                                   <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0IiBoZWlnaHQ9IjQiPgo8cmVjdCB3aWR0aD0iNCIgaGVpZ2h0PSI0IiBmaWxsPSIjM2IzODJmIiBmaWxsLW9wYWNpdHk9IjAuMSIvPgo8L3N2Zz4=')] mix-blend-overlay opacity-50"></div>
+                                </div>
+                            )}
                             {canAct && (
                                 <div className="absolute -bottom-1 -right-1 w-2.5 h-2.5 md:w-3.5 md:h-3.5 bg-blue-500 rounded-sm border-[1px] border-blue-200 flex items-center justify-center shadow-[0_0_5px_rgba(59,130,246,0.8)] z-20">
                                     <span className="text-[7px] md:text-[9px] font-bold text-white leading-none mt-[1px]">!</span>

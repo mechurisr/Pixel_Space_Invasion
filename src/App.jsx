@@ -9,6 +9,9 @@ import { GameOverModal } from './components/GameOverModal'
 import { TutorialInstructorPanel } from './components/TutorialInstructorPanel'
 import { generateWorldMap } from './mapData'
 import { useLanguage } from './LanguageContext'
+import { CommanderSelectionModal } from './components/CommanderSelectionModal'
+import { CommanderSkillPanel } from './components/CommanderSkillPanel'
+import { COMMANDERS } from './commandersData'
 
 const getAiFactions = (t) => [
   { id: 'AI-1', colorClass: 'text-blue-400', name: t('BLUE_CORSAIR') },
@@ -54,6 +57,9 @@ function App() {
   const [solarFlareDuration, setSolarFlareDuration] = useState(initialSave?.solarFlareDuration || 0)
   const [turnsSinceLastSupply, setTurnsSinceLastSupply] = useState(initialSave?.turnsSinceLastSupply || 0)
   const [tutorialStep, setTutorialStep] = useState(initialSave?.tutorialStep !== undefined ? initialSave.tutorialStep : -1) // -1 means not in tutorial
+  const [selectedCommander, setSelectedCommander] = useState(initialSave?.selectedCommander || null)
+  const [commanderCooldown, setCommanderCooldown] = useState(initialSave?.commanderCooldown || 0)
+  const [commanderTargetMode, setCommanderTargetMode] = useState(false)
   const [events, setEvents] = useState(() => {
     return initialSave?.events || [{ timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }]
   })
@@ -101,7 +107,9 @@ function App() {
         solarFlareZones,
         solarFlareDuration,
         turnsSinceLastSupply,
-        tutorialStep
+        tutorialStep,
+        selectedCommander,
+        commanderCooldown
       }
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveData))
     } else if (gameState === 'GAME_OVER_VICTORY' || gameState === 'GAME_OVER_DEFEAT') {
@@ -121,6 +129,9 @@ function App() {
     setSolarFlareZones([])
     setSolarFlareDuration(0)
     setTurnsSinceLastSupply(0)
+    setSelectedCommander(null)
+    setCommanderCooldown(0)
+    setCommanderTargetMode(false)
     setEvents([{ timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), type: 'info', message: t('SYSTEM_INITIALIZED') }])
     setSelectedCountryId(null)
     setInvasionTargetMode(false)
@@ -173,6 +184,15 @@ function App() {
         if (tutorialStep === 8 && country.id !== 26) return;
         if (tutorialStep === 9 && !transferTargetMode && country.id !== 26) return;
       }
+    }
+
+    if (commanderTargetMode) {
+      if (commanderTargetMode === country.id) {
+        setCommanderTargetMode(false)
+        return
+      }
+      handleCommanderSkillTarget(country)
+      return
     }
 
     if (gameState === 'SELECT_START') {
@@ -356,6 +376,75 @@ function App() {
           addEvent(t('NUKE_PREP'), 'alert')
         }
       }
+  }
+
+  const handleCommanderSkillTarget = (target) => {
+    const commander = COMMANDERS.find(c => c.id === selectedCommander)
+    if (!commander) return
+
+    if (supplies < commander.skillCost) {
+      addEvent(t('INSUFFICIENT_SUPPLIES'), 'alert')
+      setCommanderTargetMode(false)
+      return
+    }
+
+    if (selectedCommander === 'skyfall') {
+      if (playerIds.includes(target.id)) {
+        addEvent(t('TARGET_MUST_BE_ENEMY'), 'alert')
+        return
+      }
+      const playerNeighbors = playerIds.flatMap(id => territories.find(t => t.id === id).neighbors)
+      if (playerNeighbors.includes(target.id)) {
+        addEvent('MUST BE NON-ADJACENT REGION.', 'alert')
+        return
+      }
+      setSupplies(prev => prev - commander.skillCost)
+      setCommanderCooldown(commander.skillCooldown)
+      setTerritories(prev => prev.map(t => {
+        if (t.id === target.id) {
+          if (t.military <= 20) return { ...t, isOccupied: false, military: 20, oilStunTurns: 1 }
+          return { ...t, military: Math.floor(t.military / 2), oilStunTurns: 1 }
+        }
+        return t
+      }))
+      if (target.military <= 20) {
+        setPlayerIds(prev => [...prev, target.id])
+        setAiData(prev => prev.map(ai => ({ ...ai, territoryIds: ai.territoryIds.filter(id => id !== target.id) })))
+      }
+      addEvent(`Commander Skyfall infiltrated ${t(target.name)}!`, 'alert')
+      setCommanderTargetMode(false)
+    } 
+    else if (selectedCommander === 'boom') {
+      if (playerIds.includes(target.id)) {
+        addEvent(t('TARGET_MUST_BE_ENEMY'), 'alert')
+        return
+      }
+      setSupplies(prev => prev - commander.skillCost)
+      setCommanderCooldown(commander.skillCooldown)
+      const targets = [target.id, ...target.neighbors]
+      setTerritories(prev => prev.map(t => {
+        if (targets.includes(t.id) && !playerIds.includes(t.id)) {
+          return { ...t, military: Math.max(0, t.military - 40), tech: Math.floor(t.tech * 0.7) }
+        }
+        return t
+      }))
+      addEvent(`Dr. Boom struck ${t(target.name)} with an Orbital Strike!`, 'alert')
+      setCommanderTargetMode(false)
+    }
+    else if (selectedCommander === 'iron_wall') {
+      if (!playerIds.includes(target.id)) {
+        addEvent(t('FRIENDLY_TARGET'), 'alert')
+        return
+      }
+      setSupplies(prev => prev - commander.skillCost)
+      setCommanderCooldown(commander.skillCooldown)
+      setTerritories(prev => prev.map(t => {
+        if (t.id === target.id) return { ...t, shieldTurns: 2 }
+        return t
+      }))
+      addEvent(`General Iron Wall deployed shield at ${t(target.name)}!`, 'alert')
+      setCommanderTargetMode(false)
+    }
   }
 
   const handlePlayerInvasion = (target) => {
@@ -617,11 +706,17 @@ function App() {
     let updateLogs = []
     let alienExpansionsThisTurn = 0 // Track total expansions per turn
 
+    if (commanderCooldown > 0) setCommanderCooldown(prev => prev - 1);
+
     // Copy states for processing
     let newTerritories = [...territories].map(terr => {
       const passiveOil = terr.trait === 'RESOURCE-RICH'
         ? Math.floor(Math.random() * 11) + 5 // 5-15 oil
         : Math.floor(Math.random() * 10) // 0-9 oil
+
+      const actualPassiveOil = terr.oilStunTurns > 0 ? 0 : passiveOil;
+      const newShieldTurns = terr.shieldTurns > 0 ? terr.shieldTurns - 1 : 0;
+      const newOilStunTurns = terr.oilStunTurns > 0 ? terr.oilStunTurns - 1 : 0;
 
       // Update Nuke Status: DEVELOPING -> READY
       const nextNukeStatus = terr.nukeStatus === 'DEVELOPING' ? 'READY' : terr.nukeStatus
@@ -632,7 +727,7 @@ function App() {
         nextHasSupply = true;
       }
 
-      return { ...terr, oil: Math.min(100, terr.oil + passiveOil), nukeStatus: nextNukeStatus, hasSupply: nextHasSupply }
+      return { ...terr, oil: Math.min(100, terr.oil + actualPassiveOil), nukeStatus: nextNukeStatus, hasSupply: nextHasSupply, shieldTurns: newShieldTurns, oilStunTurns: newOilStunTurns }
     })
     let newAiData = JSON.parse(JSON.stringify(aiData))
     let newPlayerIds = [...playerIds]
@@ -688,17 +783,21 @@ function App() {
 
           let nForce = getEffectiveMilitary(target)
 
-          // AI Wins - 2:1 Ratio Distribution
-          const margin = currentTForce - nForce;
-          const totalAvailable = margin + 15;
-          const targetMilitary = Math.floor(totalAvailable / 3);
-          const sourceMilitary = totalAvailable - targetMilitary;
+          if (newTerritories[targetIndex].shieldTurns > 0) {
+            newTerritories[tIndex].military = Math.floor(newTerritories[tIndex].military * 0.5);
+            updateLogs.push(`Shield at ${t(target.name)} repelled ${factionMetadata.name}!`);
+          } else {
+            // AI Wins - 2:1 Ratio Distribution
+            const margin = currentTForce - nForce;
+            const totalAvailable = margin + 15;
+            const targetMilitary = Math.floor(totalAvailable / 3);
+            const sourceMilitary = totalAvailable - targetMilitary;
 
-          newTerritories[targetIndex].military = Math.min(100, targetMilitary);
-          newTerritories[targetIndex].isOccupied = false;
-          newTerritories[targetIndex].mutationUnit = null;
+            newTerritories[targetIndex].military = Math.min(100, targetMilitary);
+            newTerritories[targetIndex].isOccupied = false;
+            newTerritories[targetIndex].mutationUnit = null;
 
-          newTerritories[tIndex].military = Math.min(100, sourceMilitary);
+            newTerritories[tIndex].military = Math.min(100, sourceMilitary);
 
           // Claim territory
           faction.territoryIds.push(target.id)
@@ -716,6 +815,7 @@ function App() {
           })
 
           updateLogs.push(t('AI_SECURED', { name: factionMetadata.name, target: t(target.name) }))
+          }
         } else if (terr.oil >= 20 && terr.tech < 80) {
           // Upgrade Tech
           const bonus = terr.trait === 'TECH-CENTRIC' ? 25 : 15
@@ -874,11 +974,15 @@ function App() {
           let nForce = getEffectiveMilitary(target)
           if (terr.mutationUnit === 'PSIONIC ALIEN SPECIALIST') nForce = Math.max(0, nForce - Math.floor(terr.tech * 0.3))
 
-          // Alien Wins Expansion - Hive Resonance!
-          // Newly infected territories start with 20 military + small bonus from attacker
-          const leftoverAttacker = Math.max(0, newTerritories[aIndex].military - Math.floor(nForce / 2))
-          newTerritories[targetIndex].military = 20 + Math.floor(leftoverAttacker * 0.1)
-          newTerritories[targetIndex].isOccupied = true
+          if (newTerritories[targetIndex].shieldTurns > 0) {
+             newTerritories[aIndex].military = Math.floor(newTerritories[aIndex].military * 0.5);
+             updateLogs.push(`Shield at ${t(target.name)} repelled Alien Swarm!`)
+          } else {
+            // Alien Wins Expansion - Hive Resonance!
+            // Newly infected territories start with 20 military + small bonus from attacker
+            const leftoverAttacker = Math.max(0, newTerritories[aIndex].military - Math.floor(nForce / 2))
+            newTerritories[targetIndex].military = 20 + Math.floor(leftoverAttacker * 0.1)
+            newTerritories[targetIndex].isOccupied = true
           
           let targetMutation = terr.mutationUnit;
           if (targetMutation === 'MUTANT_HIVE') {
@@ -910,6 +1014,7 @@ function App() {
           })
 
           updateLogs.push(t('INFECTION_CONSUMED', { source: t(terr.name), target: t(target.name) }))
+          }
         }
       }
     })
@@ -1047,11 +1152,31 @@ function App() {
       />
 
       {gameState === 'INTRO' && (
-        <GameIntroModal onStart={() => setGameState('SELECT_START')} onStartTutorial={handleStartTutorial} />
+        <GameIntroModal onStart={() => setGameState('SELECT_COMMANDER')} onStartTutorial={handleStartTutorial} />
+      )}
+      
+      {gameState === 'SELECT_COMMANDER' && (
+        <CommanderSelectionModal onSelect={(id) => {
+          setSelectedCommander(id)
+          setGameState('SELECT_START')
+        }} />
       )}
 
       {showManual && gameState !== 'INTRO' && (
         <GameIntroModal onStart={() => setShowManual(false)} isManual={true} onStartTutorial={handleStartTutorial} />
+      )}
+
+      {gameState === 'PLAYING' && selectedCommander && (
+        <CommanderSkillPanel 
+          commanderId={selectedCommander}
+          cooldown={commanderCooldown}
+          supplies={supplies}
+          isTargeting={commanderTargetMode}
+          onUseSkill={() => {
+            if (commanderTargetMode) setCommanderTargetMode(false)
+            else setCommanderTargetMode(true)
+          }}
+        />
       )}
       
       {gameState === 'GAME_OVER_VICTORY' && (
@@ -1216,9 +1341,10 @@ function App() {
             )}
           </div>
 
-          {(invasionTargetMode || transferTargetMode || nukeTargetMode || specialForcesTargetMode) && (
+          {(invasionTargetMode || transferTargetMode || nukeTargetMode || specialForcesTargetMode || commanderTargetMode) && (
             <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/80 border-2 border-blue-500 text-blue-100 text-[10px] px-4 py-2 animate-pulse pointer-events-none z-20">
-              {invasionTargetMode ? t('TARGET_HINT_INVASION') :
+              {commanderTargetMode ? t('CMD_TARGET_HINT') :
+                invasionTargetMode ? t('TARGET_HINT_INVASION') :
                 nukeTargetMode ? t('TARGET_HINT_NUKE') :
                  specialForcesTargetMode ? t('TARGET_HINT_SPECIAL_FORCES') :
                   t('TARGET_HINT_TRANSFER')}
@@ -1228,7 +1354,7 @@ function App() {
       </div>
 
       {/* Bottom: Event Log */}
-      <div className="shrink-0 w-full z-10">
+      <div className={`shrink-0 w-full z-10 ${gameState === 'PLAYING' && selectedCommander ? 'md:pl-[300px]' : ''}`}>
         <EventLogPanel events={events} />
       </div>
     </div>
