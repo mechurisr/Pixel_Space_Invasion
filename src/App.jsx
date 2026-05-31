@@ -11,7 +11,9 @@ import { generateWorldMap } from './mapData'
 import { useLanguage } from './LanguageContext'
 import { CommanderSelectionModal } from './components/CommanderSelectionModal'
 import { CommanderSkillPanel } from './components/CommanderSkillPanel'
+import { QuestPanel } from './components/QuestPanel'
 import { COMMANDERS } from './commandersData'
+import { QUESTS } from './questsData'
 
 const getAiFactions = (t) => [
   { id: 'AI-1', colorClass: 'text-blue-400', name: t('BLUE_CORSAIR') },
@@ -60,6 +62,8 @@ function App() {
   const [selectedCommander, setSelectedCommander] = useState(initialSave?.selectedCommander || null)
   const [commanderCooldown, setCommanderCooldown] = useState(initialSave?.commanderCooldown || 0)
   const [commanderTargetMode, setCommanderTargetMode] = useState(false)
+  const [offeredQuest, setOfferedQuest] = useState(initialSave?.offeredQuest || null)
+  const [activeQuest, setActiveQuest] = useState(initialSave?.activeQuest || null)
   const [events, setEvents] = useState(() => {
     return initialSave?.events || [{ timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }]
   })
@@ -109,7 +113,9 @@ function App() {
         turnsSinceLastSupply,
         tutorialStep,
         selectedCommander,
-        commanderCooldown
+        commanderCooldown,
+        offeredQuest,
+        activeQuest
       }
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveData))
     } else if (gameState === 'GAME_OVER_VICTORY' || gameState === 'GAME_OVER_DEFEAT') {
@@ -132,6 +138,8 @@ function App() {
     setSelectedCommander(null)
     setCommanderCooldown(0)
     setCommanderTargetMode(false)
+    setOfferedQuest(null)
+    setActiveQuest(null)
     setEvents([{ timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), type: 'info', message: t('SYSTEM_INITIALIZED') }])
     setSelectedCountryId(null)
     setInvasionTargetMode(false)
@@ -1133,6 +1141,57 @@ function App() {
     setSolarFlareZones(sfZones);
     setSolarFlareDuration(sfDuration);
 
+    // Quest Evaluation Logic
+    let nextOfferedQuest = offeredQuest;
+    let nextActiveQuest = activeQuest;
+
+    if (nextTurn >= 5) {
+      if (nextActiveQuest) {
+        if (nextActiveQuest.status === 'COMPLETED' || nextActiveQuest.status === 'FAILED') {
+          // Wait for user to interact
+        } else {
+          // Evaluate progress
+          nextActiveQuest.remainingTurns -= 1;
+          const qData = QUESTS.find(q => q.id === nextActiveQuest.questId);
+          if (qData) {
+            const status = qData.checkProgress(nextActiveQuest, newPlayerIds, newTerritories);
+            if (status === 'COMPLETED' || status === 'FAILED') {
+              nextActiveQuest.status = status;
+              if (status === 'COMPLETED') {
+                updateLogs.push(t('QUEST_COMPLETED', { title: qData.title }));
+              } else {
+                updateLogs.push(`Quest Failed: ${qData.title}`);
+              }
+            }
+          } else {
+            nextActiveQuest = null;
+          }
+        }
+      } else if (!nextOfferedQuest) {
+        // Maybe offer a quest
+        if (Math.random() < 0.3) {
+          const shuffledQuests = [...QUESTS].sort(() => 0.5 - Math.random());
+          for (let q of shuffledQuests) {
+            const triggerInfo = q.evaluateTrigger(newPlayerIds, newTerritories);
+            if (triggerInfo) {
+              nextOfferedQuest = {
+                questId: q.id,
+                questData: q,
+                targetName: triggerInfo.targetName,
+                targetId: triggerInfo.targetId,
+                targetIds: triggerInfo.targetIds,
+                remainingTurns: q.duration
+              };
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    setOfferedQuest(nextOfferedQuest);
+    setActiveQuest(nextActiveQuest);
+
     setPlayerIds(newPlayerIds)
     setAiData(newAiData)
     setTerritories(newTerritories)
@@ -1143,6 +1202,35 @@ function App() {
 
   return (
     <div className="h-screen w-full bg-pixel-bg p-4 flex flex-col gap-4 font-pixel select-none relative">
+      <QuestPanel
+        offeredQuest={offeredQuest}
+        activeQuest={activeQuest}
+        onAccept={() => {
+          if (offeredQuest) {
+            setActiveQuest({ ...offeredQuest, status: 'ONGOING' });
+            setOfferedQuest(null);
+          }
+        }}
+        onDecline={() => {
+          setOfferedQuest(null);
+        }}
+        onClaimReward={() => {
+          if (activeQuest && activeQuest.status === 'COMPLETED') {
+            const qData = QUESTS.find(q => q.id === activeQuest.questId);
+            if (qData) {
+              const addSupplies = (amt) => { setSupplies(prev => prev + amt) };
+              const addFreeNukes = (amt) => { setFreeNukes(prev => prev + amt) };
+              const clonedTerritories = JSON.parse(JSON.stringify(territories));
+              qData.applyReward(activeQuest, clonedTerritories, addSupplies, addFreeNukes, playerIds);
+              setTerritories(clonedTerritories);
+            }
+            setActiveQuest(null);
+          }
+        }}
+        onDismiss={() => {
+          setActiveQuest(null);
+        }}
+      />
       <TutorialInstructorPanel 
         step={tutorialStep} 
         onNextStep={() => {
