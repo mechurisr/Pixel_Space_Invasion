@@ -2,19 +2,23 @@ export const QUESTS = [
   {
     id: 'frostbite',
     title: 'Operation Frostbite',
-    scenario: '외계 세력이 기후 무기 연구 시설이 있는 극지방을 노리고 있습니다. 방어선을 구축하세요.',
+    scenario: '외계 세력이 기후 무기 연구 시설이 있는 최전선 극지방을 노리고 있습니다. 방어선을 구축하세요.',
     image: '/assets/quests/quest_frostbite.png',
     duration: 5,
     evaluateTrigger: (playerIds, territories) => {
+      // Find TECH-CENTRIC regions owned by player
       const techRegions = playerIds.map(id => territories.find(t => t.id === id)).filter(t => t.trait === 'TECH-CENTRIC');
-      if (techRegions.length > 0) {
-        const target = techRegions[Math.floor(Math.random() * techRegions.length)];
+      // Filter for Frontline (has unowned neighbor)
+      const frontLineTech = techRegions.filter(t => t.neighbors.some(nId => !playerIds.includes(nId)));
+      
+      if (frontLineTech.length > 0) {
+        const target = frontLineTech[Math.floor(Math.random() * frontLineTech.length)];
         return { targetId: target.id, targetName: target.name };
       }
       return null;
     },
-    getConditionText: (targetName) => `${targetName} 지역을 5턴 동안 방어 (점유 유지)`,
-    getRewardText: () => `대량의 Tech 자원 및 5턴 지속 방어막(Shield)`,
+    getConditionText: (targetName) => `최전선 ${targetName} 지역을 5턴 동안 방어 (함락 금지)`,
+    getRewardText: () => `대량의 Tech 자원 및 타겟 지역 5턴 지속 방어막(Shield)`,
     checkProgress: (quest, playerIds, territories) => {
       if (!playerIds.includes(quest.targetId)) return 'FAILED';
       if (quest.remainingTurns <= 1) return 'COMPLETED';
@@ -26,29 +30,41 @@ export const QUESTS = [
         t.tech = Math.min(100, t.tech + 50);
         t.shieldTurns += 5;
       }
+    },
+    applyPenalty: (quest, territories) => {
+      const t = territories.find(t => t.id === quest.targetId);
+      if (t) {
+        t.isOccupied = true;
+        t.military = Math.min(100, t.military + 50);
+        t.mutationUnit = 'ALIEN_SURGE';
+      }
     }
   },
   {
     id: 'convoy',
     title: 'The Black Gold Convoy',
-    scenario: '핵심 송유관이 끊길 위기에 처했습니다. 보급로를 사수해야 합니다.',
+    scenario: '핵심 자원 지대와 그 인접 보급로가 적의 위협을 받고 있습니다. 사수해야 합니다.',
     image: '/assets/quests/quest_convoy.png',
     duration: 4,
     evaluateTrigger: (playerIds, territories) => {
+      // Find RESOURCE-RICH regions owned by player
       const resRegions = playerIds.map(id => territories.find(t => t.id === id)).filter(t => t.trait === 'RESOURCE-RICH');
-      if (resRegions.length > 0) {
-        for (const base of resRegions) {
-          const neighbors = base.neighbors.map(nId => territories.find(t => t.id === nId)).filter(t => t.trait === 'RESOURCE-RICH');
-          if (neighbors.length >= 2) {
-             const targetIds = [base.id, neighbors[0].id, neighbors[1].id];
-             return { targetIds, targetName: `${base.name} 인접 자원 지대` };
-          }
+      // Prioritize frontline resource regions
+      let candidates = resRegions.filter(t => t.neighbors.some(nId => !playerIds.includes(nId)));
+      if (candidates.length === 0) candidates = resRegions; // Fallback to any resource region
+      
+      if (candidates.length > 0) {
+        const target = candidates[Math.floor(Math.random() * candidates.length)];
+        // Just pick 2 random neighbors of this target to form a "supply chain" cluster
+        if (target.neighbors.length >= 2) {
+          const neighborsToHold = target.neighbors.slice(0, 2);
+          return { targetIds: [target.id, ...neighborsToHold], targetName: `${target.name} 및 인접 거점 2곳` };
         }
       }
       return null;
     },
-    getConditionText: (targetName) => `${targetName} 3곳을 동시에 4턴간 점유`,
-    getRewardText: () => `대량의 Supplies 및 타겟 지역 Oil 생산량 증가`,
+    getConditionText: (targetName) => `${targetName}을 동시에 4턴간 방어 및 점유`,
+    getRewardText: () => `대량의 Supplies 및 타겟 거점에 5턴간 막대한 Oil 생산 버프 부여`,
     checkProgress: (quest, playerIds, territories) => {
       const hasAll = quest.targetIds.every(id => playerIds.includes(id));
       if (!hasAll) return 'FAILED';
@@ -59,22 +75,45 @@ export const QUESTS = [
       addSupplies(100);
       quest.targetIds.forEach(id => {
         const t = territories.find(t => t.id === id);
-        if (t) t.oil = Math.min(100, t.oil + 50);
+        if (t) t.oilBuffTurns = 5;
+      });
+    },
+    applyPenalty: (quest, territories) => {
+      quest.targetIds.forEach(id => {
+        const t = territories.find(t => t.id === id);
+        if (t) {
+          t.isOccupied = true;
+          t.military = Math.min(100, t.military + 30);
+          t.mutationUnit = 'ALIEN_SURGE';
+        }
       });
     }
   },
   {
     id: 'silicon',
     title: 'Silicon Rescue',
-    scenario: '핵심 AI 데이터가 보관된 메갈로폴리스가 점령당했습니다. 신속히 탈환하세요.',
+    scenario: '핵심 AI 데이터가 보관된 인근 지역이 점령당했습니다. 데이터가 파기되기 전에 신속히 탈환하세요.',
     image: '/assets/quests/quest_silicon.png',
     duration: 3,
     evaluateTrigger: (playerIds, territories) => {
-      const playerNeighbors = Array.from(new Set(playerIds.flatMap(id => territories.find(t => t.id === id).neighbors)));
-      const validTargets = playerNeighbors
+      // Find unowned TECH-CENTRIC regions within 2 hops of the player
+      let reachableIds = new Set();
+      playerIds.forEach(id => {
+        const node = territories.find(t => t.id === id);
+        if(node) {
+          node.neighbors.forEach(nId => {
+            reachableIds.add(nId);
+            const neighborNode = territories.find(t => t.id === nId);
+            if(neighborNode) {
+              neighborNode.neighbors.forEach(nnId => reachableIds.add(nnId));
+            }
+          });
+        }
+      });
+      const validTargets = Array.from(reachableIds)
         .filter(nId => !playerIds.includes(nId))
         .map(nId => territories.find(t => t.id === nId))
-        .filter(t => t.trait === 'TECH-CENTRIC');
+        .filter(t => t && t.trait === 'TECH-CENTRIC');
       
       if (validTargets.length > 0) {
         const target = validTargets[Math.floor(Math.random() * validTargets.length)];
@@ -82,7 +121,7 @@ export const QUESTS = [
       }
       return null;
     },
-    getConditionText: (targetName) => `${targetName} 지역을 3턴 내에 점령 성공`,
+    getConditionText: (targetName) => `적진 ${targetName} 지역을 3턴 내에 점령 성공`,
     getRewardText: () => `대량의 Tech 및 Free Nuke 1기`,
     checkProgress: (quest, playerIds, territories) => {
       if (playerIds.includes(quest.targetId)) return 'COMPLETED';
@@ -93,46 +132,60 @@ export const QUESTS = [
       addFreeNukes(1);
       const t = territories.find(t => t.id === quest.targetId);
       if (t) t.tech = Math.min(100, t.tech + 80);
+    },
+    applyPenalty: (quest, territories) => {
+      const t = territories.find(t => t.id === quest.targetId);
+      if (t) {
+        t.isOccupied = true;
+        t.military = Math.min(100, t.military + 50);
+        t.mutationUnit = 'ALIEN_SURGE';
+      }
     }
   },
   {
     id: 'last_stand',
     title: 'Last Stand at the Pentagon',
-    scenario: '외계 강습 부대가 군사 기지로 쏟아집니다. 화력을 집중해 방어선을 유지하세요.',
+    scenario: '외계 강습 부대가 최전선 군사 기지로 쏟아집니다. 화력을 집중해 방어선을 굳건히 지키세요.',
     image: '/assets/quests/quest_last_stand.png',
     duration: 4,
     evaluateTrigger: (playerIds, territories) => {
+      // Find MILITARY POWERHOUSE regions on the frontline
       const milRegions = playerIds.map(id => territories.find(t => t.id === id)).filter(t => t.trait === 'MILITARY POWERHOUSE');
-      if (milRegions.length > 0) {
-        return { targetName: `군사 요충지` };
+      const frontLineMil = milRegions.filter(t => t.neighbors.some(nId => !playerIds.includes(nId)));
+      if (frontLineMil.length > 0) {
+        const target = frontLineMil[Math.floor(Math.random() * frontLineMil.length)];
+        return { targetId: target.id, targetName: target.name };
       }
       return null;
     },
-    getConditionText: (targetName) => `점유 중인 MILITARY POWERHOUSE 지역들의 합산 군사력 150 이상 4턴 유지`,
-    getRewardText: () => `모든 점유 지역의 Military 영구 상승`,
+    getConditionText: (targetName) => `최전선 ${targetName} 지역을 4턴 동안 방어 (함락 금지)`,
+    getRewardText: () => `방어한 타겟 거점에 5턴간 매 턴 Military 자동 회복 버프 부여`,
     checkProgress: (quest, playerIds, territories) => {
-      const currentMilRegions = playerIds.map(id => territories.find(t => t.id === id)).filter(t => t.trait === 'MILITARY POWERHOUSE');
-      const totalMilitary = currentMilRegions.reduce((sum, r) => sum + r.military, 0);
-      
-      if (totalMilitary < 150) return 'FAILED';
+      if (!playerIds.includes(quest.targetId)) return 'FAILED';
       if (quest.remainingTurns <= 1) return 'COMPLETED';
       return 'ONGOING';
     },
     applyReward: (quest, territories, addSupplies, addFreeNukes, playerIds) => {
-      playerIds.forEach(id => {
-        const t = territories.find(t => t.id === id);
-        if (t) t.military = Math.min(100, t.military + 20);
-      });
+      const t = territories.find(t => t.id === quest.targetId);
+      if (t) t.militaryBuffTurns = 5;
+    },
+    applyPenalty: (quest, territories) => {
+      const t = territories.find(t => t.id === quest.targetId);
+      if (t) {
+        t.isOccupied = true;
+        t.military = Math.min(100, t.military + 50);
+        t.mutationUnit = 'ALIEN_SURGE';
+      }
     }
   },
   {
     id: 'eurasian',
     title: 'Eurasian Link',
-    scenario: '대륙을 잇는 안전지대를 확보해야 합니다. 끊어지지 않는 영토망을 연결하세요.',
+    scenario: '대륙을 잇는 안전지대를 확보해야 합니다. 끊어지지 않는 영토망을 끝까지 사수하세요.',
     image: '/assets/quests/quest_eurasian.png',
     duration: 3,
     evaluateTrigger: (playerIds, territories) => {
-      if (playerIds.length >= 2) {
+      if (playerIds.length >= 4) {
         return { targetName: `4개 이상의 지역` };
       }
       return null;
@@ -158,8 +211,11 @@ export const QUESTS = [
         dfs(id, 1, new Set());
       });
 
-      if (maxLen >= 4) return 'COMPLETED';
-      if (quest.remainingTurns <= 1) return 'FAILED';
+      // Failed if the longest chain drops below 4 at any point during the 3 turns
+      if (maxLen < 4) return 'FAILED';
+      // Only complete when time is up
+      if (quest.remainingTurns <= 1) return 'COMPLETED';
+      
       return 'ONGOING';
     },
     applyReward: (quest, territories, addSupplies, addFreeNukes, playerIds) => {
@@ -171,6 +227,18 @@ export const QUESTS = [
           t.tech = Math.min(100, t.tech + 20);
         }
       });
+    },
+    applyPenalty: (quest, territories, playerIds) => {
+      // Pick a random player territory and surge it
+      if (playerIds && playerIds.length > 0) {
+        const randomId = playerIds[Math.floor(Math.random() * playerIds.length)];
+        const t = territories.find(x => x.id === randomId);
+        if (t) {
+          t.isOccupied = true;
+          t.military = Math.min(100, t.military + 50);
+          t.mutationUnit = 'ALIEN_SURGE';
+        }
+      }
     }
   }
 ];

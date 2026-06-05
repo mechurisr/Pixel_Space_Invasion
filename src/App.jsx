@@ -64,6 +64,7 @@ function App() {
   const [commanderTargetMode, setCommanderTargetMode] = useState(false)
   const [offeredQuest, setOfferedQuest] = useState(initialSave?.offeredQuest || null)
   const [activeQuest, setActiveQuest] = useState(initialSave?.activeQuest || null)
+  const [mothershipDefeated, setMothershipDefeated] = useState(initialSave?.mothershipDefeated || false)
   const [events, setEvents] = useState(() => {
     return initialSave?.events || [{ timestamp: '00:00', type: 'info', message: t('SYSTEM_INITIALIZED') }]
   })
@@ -115,7 +116,8 @@ function App() {
         selectedCommander,
         commanderCooldown,
         offeredQuest,
-        activeQuest
+        activeQuest,
+        mothershipDefeated
       }
       localStorage.setItem(SAVE_KEY, JSON.stringify(saveData))
     } else if (gameState === 'GAME_OVER_VICTORY' || gameState === 'GAME_OVER_DEFEAT') {
@@ -140,6 +142,7 @@ function App() {
     setCommanderTargetMode(false)
     setOfferedQuest(null)
     setActiveQuest(null)
+    setMothershipDefeated(false)
     setEvents([{ timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }), type: 'info', message: t('SYSTEM_INITIALIZED') }])
     setSelectedCountryId(null)
     setInvasionTargetMode(false)
@@ -515,7 +518,7 @@ function App() {
 
       setSupplies(prev => prev + 1); // Reward for capturing region
 
-      if (target.hasSupply) {
+      if (target.hasSupply || (tutorialStep === 7 && target.id === 26)) {
         setSupplies(prev => prev + 15);
         addEvent(t('SUPPLY_RECOVERED'), 'alert');
       }
@@ -527,11 +530,15 @@ function App() {
         addEvent(t('MUTANT_HIVE_DESTROYED'), 'alert');
         bonusOil = 50;
         bonusTech = 50;
+      } else if (target.hasMothership) {
+        setFreeNukes(prev => prev + 5);
+        addEvent('MOTHERSHIP DESTROYED! ALL ALIEN FORCES CRIPPLED!', 'alert');
+        setMothershipDefeated(true);
       }
 
       setTerritories(prev => prev.map(t => {
         if (t.id === target.id) {
-          return { ...t, military: Math.min(100, targetMilitary), isOccupied: false, mutationUnit: null, hasSupply: false, mutationCountdown: null };
+          return { ...t, military: Math.min(100, targetMilitary), isOccupied: false, mutationUnit: null, hasSupply: false, mutationCountdown: null, hasMothership: false };
         }
         if (t.id === pCountry.id) {
           return {
@@ -540,6 +547,9 @@ function App() {
             oil: Math.min(100, t.oil + bonusOil),
             tech: Math.min(100, t.tech + bonusTech)
           };
+        }
+        if (target.hasMothership && t.isOccupied) {
+          return { ...t, military: 10 };
         }
         return t;
       }));
@@ -562,7 +572,31 @@ function App() {
       addEvent(t('VANGUARD_SECURED', { name: t(target.name), source: t(pCountry.name) }), 'alert');
     } else {
       // Lose
-      setTerritories(prev => prev.map(t => t.id === pCountry.id ? { ...t, military: Math.max(0, pCountry.military - 30) } : t));
+      setTerritories(prev => prev.map(t => {
+        if (t.id === pCountry.id) {
+          return { ...t, military: Math.max(0, pCountry.military - 30) }
+        }
+        if (t.id === target.id && target.hasMothership) {
+          const newMil = Math.max(0, t.military - pForce);
+          if (newMil === 0) {
+             setMothershipDefeated(true);
+             return { ...t, military: 0, isOccupied: false, mutationUnit: null, hasMothership: false };
+          }
+          return { ...t, military: newMil };
+        }
+        if (target.hasMothership && t.isOccupied && target.military - pForce <= 0) {
+           return { ...t, military: 10 };
+        }
+        return t
+      }));
+      
+      if (target.hasMothership) {
+        if (target.military - pForce <= 0) {
+           addEvent('MOTHERSHIP DESTROYED! ALL ALIEN FORCES CRIPPLED!', 'alert');
+        } else {
+           addEvent(`모선 장갑 타격 성공! (군사력 -${pForce})`, 'info');
+        }
+      }
       addEvent(t('INVASION_FAILED', { name: t(target.name) }), 'alert');
     }
   };
@@ -613,9 +647,17 @@ function App() {
       setFreeNukes(prev => prev - 1);
     }
 
-    // Reset target to 0 Neutral
+    // Reset target to 0 Neutral (or damage Mothership)
     setTerritories(prev => prev.map(terr => {
       if (terr.id === target.id) {
+        if (terr.hasMothership) {
+           const newMil = Math.max(0, terr.military - 100);
+           if (newMil === 0) {
+              setMothershipDefeated(true);
+              return { ...terr, military: 0, isOccupied: false, mutationUnit: null, nukeStatus: null, hasMothership: false };
+           }
+           return { ...terr, military: newMil, nukeStatus: null };
+        }
         return {
           ...terr,
           military: 0,
@@ -627,8 +669,21 @@ function App() {
         }
       }
       if (terr.id === sourceId) return { ...terr, nukeStatus: null }
+      if (target.hasMothership && terr.isOccupied && target.military - 100 <= 0) {
+         return { ...terr, military: 10 };
+      }
       return terr
     }))
+
+    if (target.hasMothership) {
+      if (target.military - 100 <= 0) {
+         addEvent('MOTHERSHIP DESTROYED BY NUKE! ALL ALIEN FORCES CRIPPLED!', 'alert');
+      } else {
+         addEvent(`모선 장갑 핵 타격 성공! (군사력 -100)`, 'info');
+      }
+    } else {
+      addEvent(t('NUCLEAR_NEUTRALIZED', { name: t(target.name) }), 'alert')
+    }
 
     // Check for elimination (Nuke)
     aiData.forEach(faction => {
@@ -638,7 +693,7 @@ function App() {
       }
     })
 
-    addEvent(t('NUCLEAR_NEUTRALIZED', { name: t(target.name) }), 'alert')
+    // Event logged above
   }
 
   const handleBuyItem = (itemType) => {
@@ -704,12 +759,20 @@ function App() {
   }
 
   const handleNextTurn = () => {
-    if (tutorialStep > -1) {
+    // Force auto-fix if a user is stuck in a corrupted save
+    // (In normal games, there are 5 AI factions. In tutorial, there is only 1.)
+    if (tutorialStep > -1 && aiData.length > 1) {
+      setTutorialStep(-1);
+    }
+
+    if (tutorialStep > -1 && aiData.length <= 1) {
       if (tutorialStep === 5) setTutorialStep(6);
+      else if (tutorialStep === 8) setTutorialStep(9);
       else return;
     }
 
     setTurn(t => t + 1)
+    const nextTurn = turn + 1
     setActedRegions([])
     let updateLogs = []
     let alienExpansionsThisTurn = 0 // Track total expansions per turn
@@ -725,17 +788,36 @@ function App() {
       const actualPassiveOil = terr.oilStunTurns > 0 ? 0 : passiveOil;
       const newShieldTurns = terr.shieldTurns > 0 ? terr.shieldTurns - 1 : 0;
       const newOilStunTurns = terr.oilStunTurns > 0 ? terr.oilStunTurns - 1 : 0;
+      
+      const newOilBuffTurns = terr.oilBuffTurns > 0 ? terr.oilBuffTurns - 1 : 0;
+      const newMilitaryBuffTurns = terr.militaryBuffTurns > 0 ? terr.militaryBuffTurns - 1 : 0;
+      
+      let bonusOil = 0;
+      if (terr.oilBuffTurns > 0 && terr.oilStunTurns === 0) bonusOil = 20;
+      
+      let bonusMilitary = 0;
+      if (terr.militaryBuffTurns > 0) bonusMilitary = 15;
 
       // Update Nuke Status: DEVELOPING -> READY
       const nextNukeStatus = terr.nukeStatus === 'DEVELOPING' ? 'READY' : terr.nukeStatus
       if (terr.nukeStatus === 'DEVELOPING') updateLogs.push(t('NUKE_READY', { name: t(terr.name) }))
 
       let nextHasSupply = terr.hasSupply;
-      if (tutorialStep === 5 && terr.id === 26) {
+      if ((tutorialStep === 5 || tutorialStep === 6 || tutorialStep === 7) && terr.id === 26) {
         nextHasSupply = true;
       }
 
-      return { ...terr, oil: Math.min(100, terr.oil + actualPassiveOil), nukeStatus: nextNukeStatus, hasSupply: nextHasSupply, shieldTurns: newShieldTurns, oilStunTurns: newOilStunTurns }
+      return { 
+        ...terr, 
+        oil: Math.min(100, terr.oil + actualPassiveOil + bonusOil), 
+        military: Math.min(100, terr.military + bonusMilitary),
+        nukeStatus: nextNukeStatus, 
+        hasSupply: nextHasSupply, 
+        shieldTurns: newShieldTurns, 
+        oilStunTurns: newOilStunTurns,
+        oilBuffTurns: newOilBuffTurns,
+        militaryBuffTurns: newMilitaryBuffTurns
+      }
     })
     let newAiData = JSON.parse(JSON.stringify(aiData))
     let newPlayerIds = [...playerIds]
@@ -873,6 +955,38 @@ function App() {
       })
     })
 
+    let mothershipAlive = newTerritories.some(t => t.mutationUnit === 'MOTHERSHIP')
+
+    // Alien Mothership Arrival
+    if (nextTurn === 30 && !mothershipAlive && !mothershipDefeated) {
+      const alienRegions = newTerritories.filter(t => t.isOccupied && t.mutationUnit !== 'MOTHERSHIP')
+      let target
+      if (alienRegions.length > 0) {
+        target = alienRegions[Math.floor(Math.random() * alienRegions.length)]
+      } else {
+        const playerRegions = newTerritories.filter(t => newPlayerIds.includes(t.id))
+        if (playerRegions.length > 0) target = playerRegions[Math.floor(Math.random() * playerRegions.length)]
+      }
+      if (target) {
+        const tIdx = newTerritories.findIndex(x => x.id === target.id)
+        newTerritories[tIdx] = {
+          ...newTerritories[tIdx],
+          hasMothership: true,
+          mutationUnit: 'MOTHERSHIP',
+          military: 400,
+          isOccupied: true,
+          tech: 0,
+          oil: 0
+        }
+        newPlayerIds = newPlayerIds.filter(id => id !== target.id)
+        newAiData.forEach(otherAi => {
+           otherAi.territoryIds = otherAi.territoryIds.filter(id => id !== target.id)
+        })
+        mothershipAlive = true
+        updateLogs.push(`[CRITICAL] ALIEN MOTHERSHIP DETECTED AT ${t(target.name)}!`)
+      }
+    }
+
     // Alien Logic per territory
     const alienTerritories = newTerritories.filter(terr => terr.isOccupied)
 
@@ -917,9 +1031,11 @@ function App() {
           newTerritories[aIndex].military = Math.min(100, terr.military + 25) // Reduced from 50
           updateLogs.push(t('HIVE_SPAWNED', { name: t(terr.name) }))
         }
+      } else if (terr.mutationUnit === 'MOTHERSHIP') {
+        // Mothership does not gain military over time, but bypasses some expansion limits.
       } else {
         // Standard Aliens (Psionic, Mecha) just slowly gain military/tech
-        newTerritories[aIndex].military = Math.min(100, terr.military + 5)
+        newTerritories[aIndex].military = Math.min(100, terr.military + (mothershipAlive ? 15 : 5))
         if (terr.mutationUnit === 'PSIONIC ALIEN SPECIALIST') {
           newTerritories[aIndex].tech = Math.min(100, terr.tech + 5)
         }
@@ -956,8 +1072,9 @@ function App() {
       }
 
       // Aggressive Alien Expansion!
-      // GLOBAL LIMIT: Aliens as a whole can only expand a maximum of 3 times per turn
-      if (alienExpansionsThisTurn >= 3) return
+      // GLOBAL LIMIT: Aliens as a whole can only expand a limited number of times per turn
+      const maxExpansions = mothershipAlive ? 10 : 3;
+      if (alienExpansionsThisTurn >= maxExpansions) return
 
       const validNeighbors = terr.neighbors.filter(nId => !newTerritories.find(x => x.id === nId).isOccupied) // Aliens don't attack aliens
       let aForce = getEffectiveMilitary(newTerritories[aIndex]) // recalculate after buff
@@ -993,14 +1110,17 @@ function App() {
             newTerritories[targetIndex].isOccupied = true
           
           let targetMutation = terr.mutationUnit;
-          if (targetMutation === 'MUTANT_HIVE') {
+          if (targetMutation === 'MUTANT_HIVE' || targetMutation === 'MOTHERSHIP') {
             const standardMutations = ['HEAVILY ARMORED MECHA ALIEN', 'PSIONIC ALIEN SPECIALIST', 'GIANT RESOURCE HARVESTER'];
             targetMutation = standardMutations[Math.floor(Math.random() * standardMutations.length)];
           }
-          newTerritories[targetIndex].mutationUnit = targetMutation; // Prevent Hive cloning
+          newTerritories[targetIndex].mutationUnit = targetMutation; // Prevent Hive/Mothership cloning
 
           // HIVE EXHAUSTION: The attacking hive pushes itself to the limit and loses 50% of its remaining force
-          newTerritories[aIndex].military = Math.floor(leftoverAttacker * 0.5)
+          // Mothership does not lose military when expanding
+          if (terr.mutationUnit !== 'MOTHERSHIP') {
+            newTerritories[aIndex].military = Math.floor(leftoverAttacker * 0.5)
+          }
           alienExpansionsThisTurn++
 
           // HIVE RESONANCE: All existing adjacent alien neighbors gain +2 military
@@ -1028,7 +1148,7 @@ function App() {
     })
 
     // Periodic Alien Invasion Event (Every 5 turns starting from Turn 2: 2, 7, 12, 17...)
-    const nextTurn = turn + 1
+    // Periodic Alien Invasion Event (Every 5 turns starting from Turn 2: 2, 7, 12, 17...)
     if (nextTurn >= 2 && (nextTurn - 2) % 5 === 0) {
       const allOwnedIds = [...newPlayerIds, ...newAiData.flatMap(f => f.territoryIds)]
       const unOccupied = newTerritories.filter(node => !node.isOccupied && !allOwnedIds.includes(node.id))
@@ -1036,6 +1156,7 @@ function App() {
       if (unOccupied.length > 0) {
         // Spawn up to 2 aliens during a wave to be threatening
         const spawnCount = Math.min(2, unOccupied.length)
+        console.log(`[DEBUG] Attempting to spawn ${spawnCount} aliens on turn ${nextTurn}`);
         for (let i = 0; i < spawnCount; i++) {
           const availableTargets = newTerritories.filter(node => !node.isOccupied && !allOwnedIds.includes(node.id))
           if (availableTargets.length === 0) break;
@@ -1045,9 +1166,12 @@ function App() {
             target.trait === 'RESOURCE-RICH' ? 'GIANT RESOURCE HARVESTER' : 'HEAVILY ARMORED MECHA ALIEN'
 
           const tIdx = newTerritories.findIndex(node => node.id === target.id)
-          // Give them a starting military boost so they don't die instantly
-          newTerritories[tIdx] = { ...newTerritories[tIdx], isOccupied: true, mutationUnit: mut, military: Math.max(50, target.military) }
-          updateLogs.push(t('ALIEN_SPAWNED', { name: t(target.name), mut: t(mut) }))
+          if (tIdx !== -1) {
+            // Give them a starting military boost so they don't die instantly
+            newTerritories[tIdx] = { ...newTerritories[tIdx], isOccupied: true, mutationUnit: mut, military: Math.max(50, target.military || 50) }
+            updateLogs.push(t('ALIEN_SPAWNED', { name: t(target.name), mut: t(mut) }))
+            console.log(`[DEBUG] Alien Spawned at ${target.name} (${mut})`);
+          }
         }
       }
     }
@@ -1161,6 +1285,8 @@ function App() {
                 updateLogs.push(t('QUEST_COMPLETED', { title: qData.title }));
               } else {
                 updateLogs.push(`Quest Failed: ${qData.title}`);
+                qData.applyPenalty(nextActiveQuest, newTerritories, newPlayerIds);
+                updateLogs.push(`[CRITICAL] 퀘스트 실패로 외계 생명체가 증식합니다!`);
               }
             }
           } else {
@@ -1223,6 +1349,7 @@ function App() {
               const clonedTerritories = JSON.parse(JSON.stringify(territories));
               qData.applyReward(activeQuest, clonedTerritories, addSupplies, addFreeNukes, playerIds);
               setTerritories(clonedTerritories);
+              addEvent(`[퀘스트 보상 획득] ${qData.getRewardText()}`, 'info');
             }
             setActiveQuest(null);
           }
@@ -1240,7 +1367,10 @@ function App() {
       />
 
       {gameState === 'INTRO' && (
-        <GameIntroModal onStart={() => setGameState('SELECT_COMMANDER')} onStartTutorial={handleStartTutorial} />
+        <GameIntroModal onStart={() => {
+          setTutorialStep(-1)
+          setGameState('SELECT_COMMANDER')
+        }} onStartTutorial={handleStartTutorial} />
       )}
       
       {gameState === 'SELECT_COMMANDER' && (
