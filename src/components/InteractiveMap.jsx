@@ -1,7 +1,7 @@
 import React from 'react'
 import { useLanguage } from '../LanguageContext'
 
-export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [], solarFlareZones = [], tutorialStep = 0 }) => {
+export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [], solarFlareZones = [], tutorialStep = 0, offeredQuest = null, activeQuest = null, isQuestPanelHovered = false }) => {
     const { t } = useLanguage()
     return (
         <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border md:overflow-auto overflow-hidden md:block flex items-center justify-center">
@@ -82,7 +82,12 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                         (tutorialStep === 7 && node.id === 26) ||
                         (tutorialStep === 9 && node.id === 23);
 
-                    if (isTutorialTarget) {
+                    const isQuestTarget = (offeredQuest && (offeredQuest.targetId === node.id || offeredQuest.targetIds?.includes(node.id))) ||
+                                          (activeQuest && (activeQuest.targetId === node.id || activeQuest.targetIds?.includes(node.id)));
+
+                    if (isQuestTarget && isQuestPanelHovered) {
+                        nodeClass += ' ring-[6px] ring-yellow-400 ring-offset-2 ring-offset-black animate-pulse shadow-[0_0_20px_rgba(250,204,21,0.8)] z-40'
+                    } else if (isTutorialTarget) {
                         nodeClass += ' ring-[6px] ring-yellow-400 ring-offset-2 ring-offset-black animate-pulse shadow-[0_0_20px_rgba(250,204,21,0.8)] z-40 cursor-pointer'
                     } else if (isTargetable && !isPlayer) {
                         nodeClass += ' ring-4 ring-red-500 ring-offset-2 ring-offset-black animate-pulse cursor-crosshair z-20'
@@ -111,6 +116,13 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                             </span>
                             {node.hasEvent && !node.isOccupied && (
                                 <div className="absolute top-0 right-0 w-2 h-2 bg-red-500 animate-ping rounded-full -mt-1 -mr-1"></div>
+                            )}
+                            {isQuestTarget && !isQuestPanelHovered && (
+                                <div className="absolute -top-1 -left-1 w-3 h-3 md:w-4 md:h-4 bg-yellow-500 rounded-sm border-[1px] border-yellow-200 flex items-center justify-center shadow-[0_0_5px_rgba(234,179,8,0.8)] z-30">
+                                    <span className="text-[7px] md:text-[10px] font-bold text-black leading-none mt-[1px]">
+                                        {(offeredQuest && (offeredQuest.targetId === node.id || offeredQuest.targetIds?.includes(node.id))) ? '?' : 'Q'}
+                                    </span>
+                                </div>
                             )}
                             {(node.hasSupply || (tutorialStep === 7 && node.id === 26)) && (
                                 <div className="absolute top-0 right-0 w-3 h-3 bg-yellow-400 animate-bounce shadow-[0_0_10px_rgba(250,204,21,0.8)] border border-yellow-200 z-30 -mt-1 -mr-1" title="Supply Drop"></div>

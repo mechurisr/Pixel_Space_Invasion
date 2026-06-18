@@ -31,12 +31,16 @@ export const QUESTS = [
         t.shieldTurns += 5;
       }
     },
-    applyPenalty: (quest, territories) => {
+    applyPenalty: (quest, territories, playerIds) => {
       const t = territories.find(t => t.id === quest.targetId);
       if (t) {
         t.isOccupied = true;
         t.military = Math.min(100, t.military + 50);
         t.mutationUnit = 'ALIEN_SURGE';
+        if (playerIds) {
+          const index = playerIds.indexOf(quest.targetId);
+          if (index > -1) playerIds.splice(index, 1);
+        }
       }
     }
   },
@@ -78,13 +82,17 @@ export const QUESTS = [
         if (t) t.oilBuffTurns = 5;
       });
     },
-    applyPenalty: (quest, territories) => {
+    applyPenalty: (quest, territories, playerIds) => {
       quest.targetIds.forEach(id => {
         const t = territories.find(t => t.id === id);
         if (t) {
           t.isOccupied = true;
           t.military = Math.min(100, t.military + 30);
           t.mutationUnit = 'ALIEN_SURGE';
+          if (playerIds) {
+            const index = playerIds.indexOf(id);
+            if (index > -1) playerIds.splice(index, 1);
+          }
         }
       });
     }
@@ -133,12 +141,16 @@ export const QUESTS = [
       const t = territories.find(t => t.id === quest.targetId);
       if (t) t.tech = Math.min(100, t.tech + 80);
     },
-    applyPenalty: (quest, territories) => {
+    applyPenalty: (quest, territories, playerIds) => {
       const t = territories.find(t => t.id === quest.targetId);
       if (t) {
         t.isOccupied = true;
         t.military = Math.min(100, t.military + 50);
         t.mutationUnit = 'ALIEN_SURGE';
+        if (playerIds) {
+          const index = playerIds.indexOf(quest.targetId);
+          if (index > -1) playerIds.splice(index, 1);
+        }
       }
     }
   },
@@ -169,12 +181,16 @@ export const QUESTS = [
       const t = territories.find(t => t.id === quest.targetId);
       if (t) t.militaryBuffTurns = 5;
     },
-    applyPenalty: (quest, territories) => {
+    applyPenalty: (quest, territories, playerIds) => {
       const t = territories.find(t => t.id === quest.targetId);
       if (t) {
         t.isOccupied = true;
         t.military = Math.min(100, t.military + 50);
         t.mutationUnit = 'ALIEN_SURGE';
+        if (playerIds) {
+          const index = playerIds.indexOf(quest.targetId);
+          if (index > -1) playerIds.splice(index, 1);
+        }
       }
     }
   },
@@ -237,6 +253,8 @@ export const QUESTS = [
           t.isOccupied = true;
           t.military = Math.min(100, t.military + 50);
           t.mutationUnit = 'ALIEN_SURGE';
+          const index = playerIds.indexOf(randomId);
+          if (index > -1) playerIds.splice(index, 1);
         }
       }
     }

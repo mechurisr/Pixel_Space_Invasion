@@ -76,6 +76,7 @@ function App() {
   const [specialForcesTargetMode, setSpecialForcesTargetMode] = useState(false)
   const [showManual, setShowManual] = useState(false)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isQuestPanelHovered, setIsQuestPanelHovered] = useState(false)
 
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
@@ -413,7 +414,7 @@ function App() {
       setCommanderCooldown(commander.skillCooldown)
       setTerritories(prev => prev.map(t => {
         if (t.id === target.id) {
-          if (t.military <= 20) return { ...t, isOccupied: false, military: 20, oilStunTurns: 1 }
+          if (t.military <= 20) return { ...t, isOccupied: false, military: 20, oilStunTurns: 1, hasSupply: false, mutationUnit: null, mutationCountdown: null, hasMothership: false }
           return { ...t, military: Math.floor(t.military / 2), oilStunTurns: 1 }
         }
         return t
@@ -421,6 +422,20 @@ function App() {
       if (target.military <= 20) {
         setPlayerIds(prev => [...prev, target.id])
         setAiData(prev => prev.map(ai => ({ ...ai, territoryIds: ai.territoryIds.filter(id => id !== target.id) })))
+        
+        setSupplies(prev => prev + 1); // Base capture reward
+        if (target.hasSupply) {
+          setSupplies(prev => prev + 15);
+          addEvent(t('SUPPLY_RECOVERED'), 'alert');
+        }
+        if (target.mutationUnit === 'MUTANT_HIVE') {
+          setFreeNukes(prev => prev + 1);
+          addEvent(t('MUTANT_HIVE_DESTROYED'), 'alert');
+        } else if (target.hasMothership) {
+          setFreeNukes(prev => prev + 5);
+          addEvent('MOTHERSHIP DESTROYED! ALL ALIEN FORCES CRIPPLED!', 'alert');
+          setMothershipDefeated(true);
+        }
       }
       addEvent(`Commander Skyfall infiltrated ${t(target.name)}!`, 'alert')
       setCommanderTargetMode(false)
@@ -1331,6 +1346,8 @@ function App() {
       <QuestPanel
         offeredQuest={offeredQuest}
         activeQuest={activeQuest}
+        onMouseEnter={() => setIsQuestPanelHovered(true)}
+        onMouseLeave={() => setIsQuestPanelHovered(false)}
         onAccept={() => {
           if (offeredQuest) {
             setActiveQuest({ ...offeredQuest, status: 'ONGOING' });
@@ -1538,6 +1555,9 @@ function App() {
                     actedRegions={actedRegions}
                     solarFlareZones={solarFlareZones}
                     tutorialStep={tutorialStep}
+                    offeredQuest={offeredQuest}
+                    activeQuest={activeQuest}
+                    isQuestPanelHovered={isQuestPanelHovered}
                   />
                 </TransformComponent>
               </TransformWrapper>
@@ -1555,6 +1575,9 @@ function App() {
                 actedRegions={actedRegions}
                 solarFlareZones={solarFlareZones}
                 tutorialStep={tutorialStep}
+                offeredQuest={offeredQuest}
+                activeQuest={activeQuest}
+                isQuestPanelHovered={isQuestPanelHovered}
               />
             )}
           </div>

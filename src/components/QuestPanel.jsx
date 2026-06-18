@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useLanguage } from '../LanguageContext';
 import { QUESTS } from '../questsData';
 
-export const QuestPanel = ({ offeredQuest, activeQuest, onAccept, onDecline, onClaimReward, onDismiss }) => {
+export const QuestPanel = ({ offeredQuest, activeQuest, onAccept, onDecline, onClaimReward, onDismiss, onMouseEnter, onMouseLeave }) => {
     const { t } = useLanguage();
     const [isMinimized, setIsMinimized] = useState(false);
 
@@ -27,11 +27,16 @@ export const QuestPanel = ({ offeredQuest, activeQuest, onAccept, onDecline, onC
     }
 
     return (
-        <div className="fixed bottom-40 left-4 z-50 w-80 bg-black/80 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] font-pixel text-white pointer-events-auto">
+        <div className="fixed bottom-40 left-4 z-50 w-80 bg-black/80 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] font-pixel text-white pointer-events-auto"
+             onMouseEnter={onMouseEnter}
+             onMouseLeave={onMouseLeave}>
             {/* Header / Minimize Button */}
             <div className="absolute top-2 right-2 z-10">
                 <button 
-                    onClick={() => setIsMinimized(true)}
+                    onClick={() => {
+                        setIsMinimized(true);
+                        if (onMouseLeave) onMouseLeave();
+                    }}
                     className="text-white/70 hover:text-white bg-black/50 px-2 py-1 rounded text-xs border border-white/20"
                 >
                     [-]
