@@ -1,7 +1,7 @@
 import React from 'react'
 import { useLanguage } from '../LanguageContext'
 
-export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, actedRegions = [], solarFlareZones = [], tutorialStep = 0, offeredQuest = null, activeQuest = null, isQuestPanelHovered = false }) => {
+export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, aiData, aiFactions, invasionTargetMode, transferTargetMode, nukeTargetMode, commanderTargetMode, specialForcesTargetMode, actedRegions = [], solarFlareZones = [], tutorialStep = 0, offeredQuest = null, activeQuest = null, isQuestPanelHovered = false }) => {
     const { t } = useLanguage()
     return (
         <div className="relative w-full h-full bg-black/40 border-4 border-pixel-border md:overflow-auto overflow-hidden md:block flex items-center justify-center">
@@ -41,6 +41,8 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
 
                     // Nuke targetable is ANY region
                     const isNukeTarget = nukeTargetMode && node.id !== nukeTargetMode
+                    
+                    const isCommanderTarget = commanderTargetMode && !isPlayer
 
                     let nodeClass = 'bg-slate-800/80 border-slate-600 focus:bg-slate-700'
                     let textClass = 'text-slate-300'
@@ -95,6 +97,8 @@ export const InteractiveMap = ({ territories, onSelect, selectedId, playerIds, a
                         nodeClass += ' ring-4 ring-green-400 ring-offset-2 ring-offset-black animate-pulse cursor-pointer z-20'
                     } else if (isNukeTarget) {
                         nodeClass += ' ring-[6px] ring-red-600 ring-offset-4 ring-offset-black animate-pulse shadow-[0_0_20px_rgba(220,38,38,0.8)] cursor-crosshair z-30'
+                    } else if (isCommanderTarget) {
+                        nodeClass += ' ring-[6px] ring-purple-500 ring-offset-4 ring-offset-black animate-pulse shadow-[0_0_20px_rgba(168,85,247,0.8)] cursor-crosshair z-30'
                     } else if (isSelected) {
                         nodeClass += ' ring-2 ring-blue-400'
                     }

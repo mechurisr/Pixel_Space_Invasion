@@ -42,6 +42,19 @@ function App() {
     } catch (e) { console.error('Error loading save game', e) }
     return null
   }, [])
+  const debugParams = React.useMemo(() => {
+    if (typeof window === 'undefined') return {};
+    const params = new URLSearchParams(window.location.search);
+    return {
+      forceCommander: params.get('forceCommander'),
+      forceSupplies: params.get('forceSupplies') ? parseInt(params.get('forceSupplies'), 10) : null,
+      forceQuest: params.get('forceQuest'),
+      forceTarget: params.get('forceTarget') ? parseInt(params.get('forceTarget'), 10) : null,
+      forceMothership: params.get('forceMothership') ? parseInt(params.get('forceMothership'), 10) : null,
+      forceEvent: params.get('forceEvent'),
+      forceFreeNukes: params.get('forceFreeNukes') ? parseInt(params.get('forceFreeNukes'), 10) : null,
+    }
+  }, []);
 
   const [gameState, setGameState] = useState(initialSave?.gameState || 'INTRO') // INTRO, SELECT_START, PLAYING, GAME_OVER
   const [territories, setTerritories] = useState(initialSave?.territories || generateWorldMap())
@@ -53,8 +66,8 @@ function App() {
   const [aiData, setAiData] = useState(initialSave?.aiData || []) // Array of { factionId, territoryIds: [] }
   const [actedRegions, setActedRegions] = useState(initialSave?.actedRegions || [])
   const [turn, setTurn] = useState(initialSave?.turn || 1)
-  const [freeNukes, setFreeNukes] = useState(initialSave?.freeNukes || 0)
-  const [supplies, setSupplies] = useState(initialSave?.supplies || 0)
+  const [freeNukes, setFreeNukes] = useState(initialSave?.freeNukes ?? debugParams.forceFreeNukes ?? 0)
+  const [supplies, setSupplies] = useState(initialSave?.supplies ?? debugParams.forceSupplies ?? 0)
   const [solarFlareZones, setSolarFlareZones] = useState(initialSave?.solarFlareZones || [])
   const [solarFlareDuration, setSolarFlareDuration] = useState(initialSave?.solarFlareDuration || 0)
   const [turnsSinceLastSupply, setTurnsSinceLastSupply] = useState(initialSave?.turnsSinceLastSupply || 0)
@@ -252,6 +265,45 @@ function App() {
           territoryIds: [selectedNode.id]
         }
       })
+      // Apply debug params
+      if (debugParams.forceQuest) {
+        const quest = QUESTS.find(q => q.id === debugParams.forceQuest)
+        if (quest) {
+          const targetNode = debugParams.forceTarget ? newTerritories.find(t => t.id === debugParams.forceTarget) : country
+          setOfferedQuest({
+            questId: quest.id,
+            questData: quest,
+            ...quest,
+            targetId: targetNode.id,
+            targetIds: [targetNode.id, ...(targetNode.neighbors || []).slice(0, 2)], // simple fallback for convoy
+            targetName: targetNode.name,
+            remainingTurns: quest.duration
+          })
+        }
+      }
+      if (debugParams.forceMothership) {
+        const msNodeIdx = newTerritories.findIndex(t => t.id === debugParams.forceMothership)
+        if (msNodeIdx >= 0) {
+          newTerritories[msNodeIdx].isOccupied = true
+          newTerritories[msNodeIdx].hasMothership = true
+          newTerritories[msNodeIdx].mutationUnit = 'MOTHERSHIP'
+          newTerritories[msNodeIdx].military = 500
+        }
+      }
+      if (debugParams.forceEvent === 'mutant_hive') {
+        const targetIdx = debugParams.forceTarget ? newTerritories.findIndex(t => t.id === debugParams.forceTarget) : 0
+        if (targetIdx >= 0) {
+          newTerritories[targetIdx].isOccupied = true
+          newTerritories[targetIdx].mutationUnit = 'MUTANT_HIVE'
+          newTerritories[targetIdx].mutationCountdown = 3
+          newTerritories[targetIdx].military = 100
+        }
+      }
+      if (debugParams.forceEvent === 'solar_flare') {
+        const targetId = debugParams.forceTarget || country.id
+        setSolarFlareZones([targetId])
+        setSolarFlareDuration(2)
+      }
 
       setTerritories(newTerritories)
       setAiData(aiInitData)
@@ -1386,7 +1438,12 @@ function App() {
       {gameState === 'INTRO' && (
         <GameIntroModal onStart={() => {
           setTutorialStep(-1)
-          setGameState('SELECT_COMMANDER')
+          if (debugParams.forceCommander) {
+            setSelectedCommander(debugParams.forceCommander)
+            setGameState('SELECT_START')
+          } else {
+            setGameState('SELECT_COMMANDER')
+          }
         }} onStartTutorial={handleStartTutorial} />
       )}
       
@@ -1552,6 +1609,8 @@ function App() {
                     invasionTargetMode={invasionTargetMode}
                     transferTargetMode={transferTargetMode}
                     nukeTargetMode={nukeTargetMode}
+                    commanderTargetMode={commanderTargetMode}
+                    specialForcesTargetMode={specialForcesTargetMode}
                     actedRegions={actedRegions}
                     solarFlareZones={solarFlareZones}
                     tutorialStep={tutorialStep}
@@ -1572,6 +1631,8 @@ function App() {
                 invasionTargetMode={invasionTargetMode}
                 transferTargetMode={transferTargetMode}
                 nukeTargetMode={nukeTargetMode}
+                commanderTargetMode={commanderTargetMode}
+                specialForcesTargetMode={specialForcesTargetMode}
                 actedRegions={actedRegions}
                 solarFlareZones={solarFlareZones}
                 tutorialStep={tutorialStep}
