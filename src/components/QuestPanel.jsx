@@ -14,7 +14,7 @@ export const QuestPanel = ({ offeredQuest, activeQuest, onAccept, onDecline, onC
 
     if (isMinimized) {
         return (
-            <div className="fixed bottom-40 left-4 z-50 w-72 flex items-center justify-between bg-black/80 border-2 border-yellow-500 p-2 cursor-pointer hover:bg-gray-800 pointer-events-auto"
+            <div className="fixed top-20 right-4 z-50 w-72 flex items-center justify-between bg-black/80 border-2 border-yellow-500 p-2 cursor-pointer hover:bg-gray-800 pointer-events-auto"
                  onClick={() => setIsMinimized(false)}>
                 <span className={`font-pixel text-sm font-bold truncate pr-2 ${quest.status === 'COMPLETED' ? 'text-green-400' : quest.status === 'FAILED' ? 'text-red-400' : 'text-yellow-400'}`}>
                     {isOffered ? "NEW QUEST!" : quest.status === 'COMPLETED' ? `SUCCESS: ${qData.title}` : quest.status === 'FAILED' ? `FAILED: ${qData.title}` : `ACTIVE: ${qData.title}`}
@@ -27,7 +27,7 @@ export const QuestPanel = ({ offeredQuest, activeQuest, onAccept, onDecline, onC
     }
 
     return (
-        <div className="fixed bottom-40 left-4 z-50 w-80 bg-black/80 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] font-pixel text-white pointer-events-auto"
+        <div className="fixed top-20 right-4 z-50 w-80 bg-black/80 border-2 border-yellow-500 shadow-[0_0_15px_rgba(234,179,8,0.5)] font-pixel text-white pointer-events-auto"
              onMouseEnter={onMouseEnter}
              onMouseLeave={onMouseLeave}>
             {/* Header / Minimize Button */}
