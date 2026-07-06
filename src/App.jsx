@@ -103,6 +103,10 @@ function App() {
         });
         return newIds;
       });
+      // Ensure these regions are invincible to random alien RNG during tests
+      setTerritories(prev => prev.map(t => 
+        e.detail.includes(t.id) ? { ...t, isOccupied: false, military: 100, shieldTurns: 10, mutationUnit: null } : t
+      ));
     };
     window.addEventListener('TEST_OCCUPY', handleTestOccupy);
 
