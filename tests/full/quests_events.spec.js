@@ -36,6 +36,42 @@ test.describe('Full Test: Quests and Events', () => {
     await expect(questAcceptBtn).toBeVisible();
     await questAcceptBtn.click();
     await page.waitForTimeout(500);
+
+    // 1. End turn without capturing neighbors -> should NOT fail, just decrease time
+    const nextTurnBtn = page.locator('button', { hasText: /NEXT_TURN|다음 턴/i }).first();
+    await nextTurnBtn.click();
+    await page.waitForTimeout(500);
+
+    const failedText = page.locator('div', { hasText: /작전이 실패했습니다/i });
+    await expect(failedText).toHaveCount(0); // Ensure it didn't fail
+
+    const conditionText = page.locator('div', { hasText: /\(진행: 0\/4턴\)/i }).first();
+    await expect(conditionText).toBeVisible();
+
+    // 2. Simulate capturing the required neighbors (23, 24, 26) and fast-forward to turn 4
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent('TEST_OCCUPY', { detail: [23, 24, 26] }));
+      window.dispatchEvent(new CustomEvent('TEST_SET_TURN', { detail: 4 }));
+    });
+    
+    // Give React time to update state
+    await page.waitForTimeout(500);
+
+    // 3. End turn 4 times to hold the regions and complete the quest
+    const nextTurnBtn2 = page.locator('button', { hasText: /NEXT_TURN|다음 턴/i }).first();
+    for (let i = 1; i <= 4; i++) {
+      await nextTurnBtn2.click();
+      await page.waitForTimeout(500);
+      if (i < 4) {
+        const progressText = page.locator('div', { hasText: new RegExp(`\\(진행: ${i}\\/4턴\\)`, 'i') }).first();
+        await expect(progressText).toBeVisible();
+      }
+      await page.waitForTimeout(500);
+    }
+
+    // 4. Verify quest completed
+    const claimBtn = page.locator('button', { hasText: /보상 수령/i }).first();
+    await expect(claimBtn).toBeVisible();
   });
 
   test('TC 2-2-c: Silicon Rescue Quest', async ({ page }) => {

@@ -49,7 +49,7 @@ export const QUESTS = [
     title: 'The Black Gold Convoy',
     scenario: '핵심 자원 지대와 그 인접 보급로가 적의 위협을 받고 있습니다. 사수해야 합니다.',
     image: '/assets/quests/quest_convoy.png',
-    duration: 4,
+    duration: 10,
     evaluateTrigger: (playerIds, territories) => {
       // Find RESOURCE-RICH regions owned by player
       const resRegions = playerIds.map(id => territories.find(t => t.id === id)).filter(t => t.trait === 'RESOURCE-RICH');
@@ -67,12 +67,20 @@ export const QUESTS = [
       }
       return null;
     },
-    getConditionText: (targetName) => `${targetName}을 동시에 4턴간 방어 및 점유`,
+    getConditionText: (targetName, quest) => `(진행: ${quest?.heldTurns || 0}/4턴) ${targetName}을 동시에 4턴간 방어 및 점유`,
     getRewardText: () => `대량의 Supplies 및 타겟 거점에 5턴간 막대한 Oil 생산 버프 부여`,
     checkProgress: (quest, playerIds, territories) => {
       const hasAll = quest.targetIds.every(id => playerIds.includes(id));
-      if (!hasAll) return 'FAILED';
-      if (quest.remainingTurns <= 1) return 'COMPLETED';
+      
+      if (hasAll) {
+        quest.heldTurns = (quest.heldTurns || 0) + 1;
+      } else {
+        quest.heldTurns = 0;
+      }
+
+      if (quest.heldTurns >= 4) return 'COMPLETED';
+      if (quest.remainingTurns <= 1) return 'FAILED';
+      
       return 'ONGOING';
     },
     applyReward: (quest, territories, addSupplies, addFreeNukes, playerIds) => {

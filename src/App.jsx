@@ -94,7 +94,28 @@ function App() {
   React.useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768)
     window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
+
+    const handleTestOccupy = (e) => {
+      setPlayerIds(prev => {
+        const newIds = [...prev];
+        e.detail.forEach(id => {
+          if (!newIds.includes(id)) newIds.push(id);
+        });
+        return newIds;
+      });
+    };
+    window.addEventListener('TEST_OCCUPY', handleTestOccupy);
+
+    const handleTestSetTurn = (e) => {
+      setTurn(e.detail);
+    };
+    window.addEventListener('TEST_SET_TURN', handleTestSetTurn);
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      window.removeEventListener('TEST_OCCUPY', handleTestOccupy)
+      window.removeEventListener('TEST_SET_TURN', handleTestSetTurn)
+    }
   }, [])
 
   // Win/Loss Condition Check
@@ -1334,7 +1355,7 @@ function App() {
 
     // Quest Evaluation Logic
     let nextOfferedQuest = offeredQuest;
-    let nextActiveQuest = activeQuest;
+    let nextActiveQuest = activeQuest ? { ...activeQuest } : null;
 
     if (nextTurn >= 5) {
       if (nextActiveQuest) {

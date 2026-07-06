@@ -96,7 +96,7 @@ export const QuestPanel = ({ offeredQuest, activeQuest, onAccept, onDecline, onC
                         ) : (
                             <div className="bg-blue-900/40 p-2 border border-blue-500/30 rounded text-xs">
                                 <span className="text-blue-400 block mb-1">목표:</span>
-                                {qData.getConditionText(quest.targetName)}
+                                {qData.getConditionText(quest.targetName, quest)}
                             </div>
                         )}
                         
